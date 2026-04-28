@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:h2:mem:proofly;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+    username: ${TEST_DB_USERNAME:sa}
+    password: ${TEST_DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: ${MINIO_BUCKET:proofly-test}
+
+proofly:
+  deployment-mode: single-store
+  default-store-id: test-store

@@ -45,6 +45,7 @@
 ## Codex 工作规则
 
 - 开始任务前先阅读 `README.md`、`AGENT.md` 和相关源码。
+- 涉及 Figma 原型或前端页面实现时，必须同时阅读 `docs/system-module-list.md` 和 `docs/figma-design-system-rules.md`。
 - 修改前先确认当前文件是否已有用户改动，不要覆盖无关变更。
 - 优先实现 MVP 需要的功能，不做过度抽象。
 - 不随意引入大型依赖；确需引入时说明用途，并优先选择生态成熟、维护活跃的库。

@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: proofly-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+proofly:
+  deployment-mode: ${PROOFLY_DEPLOYMENT_MODE:single-store}
+  default-store-id: ${PROOFLY_DEFAULT_STORE_ID:}
