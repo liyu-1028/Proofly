@@ -29,8 +29,8 @@
 | API | REST JSON |
 | 数据访问 | MyBatis-Plus Mapper，复杂查询可使用 MyBatis XML |
 | 数据库 | MySQL 8.0 |
-| 缓存 | Redis |
-| 对象存储 | MinIO |
+| 缓存 | Redis 7.4.8（Docker 镜像建议 `redis:7.4.8-alpine`） |
+| 对象存储 | MinIO `RELEASE.2025-09-07T16-13-09Z`（Docker 镜像建议 `minio/minio:RELEASE.2025-09-07T16-13-09Z`） |
 | 部署 | Docker、Docker Compose |
 
 除非用户明确要求变更技术栈，否则按以上方案推进。
@@ -40,6 +40,8 @@
 - JDK 固定使用 17，不使用更低版本。
 - Spring Boot 固定使用 3.5.x 最新补丁版本，初始化工程时不要直接选择 Spring Boot 4.x。
 - MySQL 固定使用 8.0，开发、测试、生产保持同一主版本。
+- Redis 固定使用 7.4.8，Docker Compose 默认镜像使用 `redis:7.4.8-alpine`。MVP 只需要缓存、会话、短链、限流和轻量任务状态，不使用 Redis 8.x 新特性。
+- MinIO 固定使用 `RELEASE.2025-09-07T16-13-09Z`，Docker Compose 默认镜像使用 `minio/minio:RELEASE.2025-09-07T16-13-09Z`。生产部署前需要复核 MinIO 官方支持策略和安全发布情况。
 - 后续如接入 LangChain4j、Spring AI 或其他 AI 问答能力，优先作为独立模块接入，不侵入审稿、标注、确认主流程。
 
 ## Codex 工作规则
@@ -213,8 +215,8 @@ frontend/
 本地开发优先使用 Docker Compose 管理基础依赖：
 
 - MySQL：业务数据。
-- Redis：缓存和临时状态。
-- MinIO：设计稿和导出文件。
+- Redis：缓存和临时状态，镜像固定 `redis:7.4.8-alpine`。
+- MinIO：设计稿和导出文件，镜像固定 `minio/minio:RELEASE.2025-09-07T16-13-09Z`。
 
 建议在 `docker/` 下维护开发环境配置，并在 README 中补充启动命令。敏感配置不要提交真实密钥，可使用 `.env.example` 提供示例。
 
