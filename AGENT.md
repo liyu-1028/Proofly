@@ -27,7 +27,7 @@
 | 后端 | JDK 17、Spring Boot 3.5.x |
 | 前端 | Vue 3、Vite、TypeScript |
 | API | REST JSON |
-| 数据访问 | MyBatis-Plus Mapper，复杂查询可使用 MyBatis XML |
+| 数据访问 | DAO 层基于 MyBatis-Plus Mapper，复杂查询可使用 MyBatis XML |
 | 数据库 | MySQL 8.0 |
 | 缓存 | Redis 7.4.8（Docker 镜像建议 `redis:7.4.8-alpine`） |
 | 对象存储 | MinIO `RELEASE.2024-07-16T23-46-41Z`（Docker 镜像建议 `minio/minio:RELEASE.2024-07-16T23-46-41Z`） |
@@ -58,7 +58,7 @@
 
 ## 后端约定
 
-后端默认使用 Spring Boot 分层结构，数据访问层统一命名为 Mapper：
+后端默认使用 Spring Boot 分层结构，数据访问层统一命名为 DAO：
 
 ```text
 backend/
@@ -66,7 +66,7 @@ backend/
 │   └── .../
 │       ├── controller/    # HTTP API
 │       ├── service/       # 业务逻辑
-│       ├── mapper/        # MyBatis-Plus / MyBatis 数据访问
+│       ├── dao/           # DAO 层，基于 MyBatis-Plus / MyBatis 数据访问
 │       ├── domain/        # 实体和值对象
 │       ├── dto/           # 请求和响应 DTO
 │       ├── config/        # 配置
@@ -83,10 +83,10 @@ backend/
 默认调用链：
 
 ```text
-Controller -> Service -> Mapper -> MySQL
+Controller -> Service -> DAO -> MySQL
 ```
 
-Controller 不直接调用 Mapper。事务、版本变更、确认留痕、文件与数据库的一致性处理都放在 Service 层。
+Controller 不直接调用 DAO。事务、版本变更、确认留痕、文件与数据库的一致性处理都放在 Service 层。
 
 ### 后端依赖基线
 
