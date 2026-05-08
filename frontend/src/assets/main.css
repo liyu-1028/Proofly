@@ -1,4 +1,12 @@
 :root {
+  --el-color-primary: #2a9d8f;
+  --el-color-primary-light-3: #62bcb1;
+  --el-color-primary-light-5: #95d2ca;
+  --el-color-primary-light-7: #c6e7e2;
+  --el-color-primary-light-8: #d9efec;
+  --el-color-primary-light-9: #e8f6f3;
+  --el-color-primary-dark-2: #14796d;
+  --el-border-radius-base: 8px;
   color: #182026;
   background: #f5f7f8;
   font-family:

@@ -2,6 +2,8 @@
 
 Vue 3 + Vite + TypeScript frontend for 审稿宝.
 
+UI components use Element Plus with `@element-plus/icons-vue`.
+
 ## Development
 
 ```bash
