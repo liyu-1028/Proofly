@@ -32,4 +32,12 @@ public class BusinessException extends RuntimeException {
     public static BusinessException badRequest(String message) {
         return new BusinessException(400, message, HttpStatus.BAD_REQUEST);
     }
+
+    public static BusinessException notFound(String message) {
+        return new BusinessException(404, message, HttpStatus.NOT_FOUND);
+    }
+
+    public static BusinessException conflict(String message) {
+        return new BusinessException(409, message, HttpStatus.CONFLICT);
+    }
 }

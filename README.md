@@ -90,7 +90,7 @@
 | 层级 | 技术 |
 | --- | --- |
 | 后端 | JDK 17、Spring Boot 3.5.x |
-| 后端分层 | Controller、Service、Mapper、Domain/DTO |
+| 后端分层 | Controller、Service、DAO、Domain/DTO |
 | 数据访问 | MyBatis-Plus，复杂查询可补充 MyBatis XML |
 | 前端 | Vue 3、Vite、TypeScript |
 | 数据库 | MySQL 8.0 |
@@ -117,13 +117,13 @@
 ```text
 Controller
 → Service
-→ Mapper
+→ DAO
 → MySQL
 ```
 
 - Controller 只处理 HTTP 入参、权限边界和响应。
 - Service 承载业务流程、事务和跨资源编排。
-- Mapper 负责数据库访问，默认使用 MyBatis-Plus。
+- DAO 负责数据库访问，默认基于 MyBatis-Plus Mapper 实现。
 - 复杂统计、列表筛选、关联查询可使用 MyBatis XML 补充。
 - DTO/VO 与数据库实体分离，避免直接暴露表结构。
 
