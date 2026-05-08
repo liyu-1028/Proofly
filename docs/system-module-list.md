@@ -29,7 +29,7 @@
 | M09 | 后台工作台与状态看板 | P1 | 未开始 | 暂无业务实现 | 门店老板、设计师 | 汇总项目状态、待办、近期活动 |
 | M10 | 通知与提醒 | P1 | 未开始 | 已完成数据结构文档；暂无通知业务实现 | 设计师、客户 | 提醒客户审稿、提醒设计师处理反馈 |
 | M11 | 系统配置与基础数据 | P1 | 未开始 | 已完成 system_config 数据结构文档；暂无配置管理业务实现 | 管理员、门店老板 | 管理门店参数、文件限制、状态字典等 |
-| M12 | 部署、运维与开放接口 | P1 | 进行中 | 已完成后端骨架、健康检查、API 文档、数据库文档、建表 SQL、Maven 约定；Docker Compose、环境样例未完成 | 管理员、开发者 | 支撑环境配置、健康检查、API 文档 |
+| M12 | 部署、运维与开放接口 | P1 | 进行中 | 已完成后端骨架、健康检查、模块接口文档、数据库文档、建表 SQL、Maven 约定；Docker Compose、环境样例未完成 | 管理员、开发者 | 支撑环境配置、健康检查、API 文档 |
 | M13 | 套餐、用量与账单 | P2 | 未开始 | MVP 暂不实现 | 平台管理员、门店老板 | 为 SaaS 化和商业化预留 |
 | M14 | AI 辅助能力 | P2 | 未开始 | MVP 暂不实现 | 设计师、客户 | 后续支持智能总结、智能审稿建议等 |
 
@@ -552,7 +552,7 @@ stores/{storeId}/projects/{projectId}/versions/{versionId}/{fileId}-{filename}
 docker/docker-compose.dev.yml
 docker/docker-compose.prod.example.yml
 .env.example
-docs/api.md
+docs/api-m12-deployment-ops-openapi.md
 docs/database.md
 ```
 
@@ -768,6 +768,15 @@ deleted
 确认记录、审计日志等留痕表不建议使用物理删除。
 
 ## 核心 API 分组
+
+接口文档按模块拆分维护。文件名使用 `docs/api-mXX-module-name.md` 格式，每完成一个新模块功能时创建或更新该模块接口文档。
+
+当前已建立的模块接口文档：
+
+| 模块 | 接口文档 |
+| --- | --- |
+| M01 账号、门店与权限 | `docs/api-m01-account-store-permission.md` |
+| M12 部署、运维与开放接口 | `docs/api-m12-deployment-ops-openapi.md` |
 
 | API 分组 | 说明 |
 | --- | --- |
