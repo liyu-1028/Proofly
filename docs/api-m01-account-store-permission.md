@@ -127,6 +127,12 @@
 | 400 | 400 | `account` 或 `password` 为空 |
 | 401 | 401 | 账号或密码错误、用户停用、门店停用 |
 
+前端调用位置：
+
+- `frontend/src/api/auth.ts`
+- `frontend/src/stores/session.ts`
+- `frontend/src/views/auth/LoginView.vue`
+
 ## POST `/api/auth/refresh`
 
 状态：已实现。
@@ -157,6 +163,12 @@
 | --- | --- | --- |
 | 400 | 400 | `refreshToken` 为空 |
 | 401 | 401 | refresh token 无效、过期或会话失效 |
+
+前端调用位置：
+
+- `frontend/src/api/auth.ts`
+- `frontend/src/stores/session.ts`
+- `frontend/src/router/index.ts`
 
 ## POST `/api/auth/logout`
 
@@ -192,6 +204,12 @@ Authorization: Bearer <accessToken>
 | HTTP 状态 | 业务码 | 场景 |
 | --- | --- | --- |
 | 401 | 401 | 缺少 access token、token 无效或已过期 |
+
+前端调用位置：
+
+- `frontend/src/api/auth.ts`
+- `frontend/src/stores/session.ts`
+- `frontend/src/App.vue`
 
 ## GET `/api/auth/me`
 
@@ -245,6 +263,14 @@ Authorization: Bearer <accessToken>
 | HTTP 状态 | 业务码 | 场景 |
 | --- | --- | --- |
 | 401 | 401 | 缺少 access token、token 无效或已过期 |
+
+前端调用位置：
+
+- `frontend/src/api/auth.ts`
+- `frontend/src/stores/session.ts`
+- `frontend/src/router/index.ts`
+- `frontend/src/views/admin/staff/StaffView.vue`
+- `frontend/src/views/admin/settings/SettingsView.vue`
 
 ## 计划接口补充规则
 

@@ -269,7 +269,8 @@ stores/{storeId}/projects/{projectId}/versions/{versionId}/{fileId}-{filename}
 
 - [x] 创建项目基础目录。
 - [x] 生成 README 和 AGENT 开发规范。
-- [ ] 初始化 Spring Boot 后端工程。
-- [ ] 初始化 Vue 3 前端工程。
+- [x] 初始化 Spring Boot 后端工程。
+- [x] 初始化 Vue 3 前端工程。
+- [x] 完成账号模块前端登录、会话和后台路由守卫。
 - [ ] 编写 Docker Compose 本地依赖配置。
 - [ ] 设计核心数据模型和接口。

@@ -51,6 +51,13 @@
 - 后台刷新 Token 接口：`POST /api/auth/refresh`。
 - 后台登出接口：`POST /api/auth/logout`。
 - 当前用户接口：`GET /api/auth/me`。
+- 前端登录页：`frontend/src/views/auth/LoginView.vue`。
+- 前端认证 API 封装：`frontend/src/api/auth.ts`。
+- 前端会话状态：`frontend/src/stores/session.ts`，支持 token 持久化、刷新、当前用户加载和退出登录。
+- 前端后台路由守卫：`frontend/src/router/index.ts`，未登录访问后台会跳转到 `/login`。
+- 后台壳子展示当前用户和门店 ID，并提供退出登录入口。
+- 员工管理页已展示当前登录账号；完整员工列表等待后端员工管理接口实现。
+- 系统设置页已展示当前门店 ID、当前用户和账号状态；门店资料更新等待后端门店接口实现。
 - JWT + Redis 的 access token 和 refresh token 会话机制。
 - Redis 黑名单，用于登出后使 access token 失效。
 - Spring Security 基础鉴权过滤器。
@@ -68,12 +75,14 @@
 - 角色管理界面和完整权限模型。
 - 修改密码、忘记密码、验证码、登录失败锁定策略的完整实现。
 - 客户审稿链接的访问令牌校验。客户公开审稿不使用后台登录态。
+- 前端员工创建、员工编辑、停用启用、重置密码和门店资料编辑功能，需等待对应后端接口完成后接入。
 
 交接说明：
 
 - 后续任何后台模块都应通过当前登录态获取 `storeId`，不能由前端直接传入可信 `store_id`。
 - 后台请求需要使用 `Authorization: Bearer <accessToken>`。
 - 登录成功后，调用方需要保存 access token 和 refresh token；access token 过期后使用 refresh token 换新 access token。
+- 前端新增后台页面时，需要在路由上设置 `meta.requiresAuth = true`。
 - 本模块当前只提供角色编码，不提供细粒度菜单或按钮权限。
 - 本地开发前需要执行 `docs/mysql-schema.sql` 和 `docs/auth-seed.sql`。
 
