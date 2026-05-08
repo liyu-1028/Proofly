@@ -7,7 +7,7 @@
 target/
 
 
-node_modules
-dist
-dist-ssr
 *.local
+
+frontend/dist
+frontend/node_modules
