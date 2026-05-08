@@ -21,3 +21,8 @@ springdoc:
 proofly:
   deployment-mode: ${PROOFLY_DEPLOYMENT_MODE:single-store}
   default-store-id: ${PROOFLY_DEFAULT_STORE_ID:}
+  auth:
+    jwt-secret: ${PROOFLY_AUTH_JWT_SECRET:proofly-local-dev-jwt-secret-must-be-at-least-32-bytes}
+    access-token-ttl-minutes: ${PROOFLY_AUTH_ACCESS_TOKEN_TTL_MINUTES:120}
+    refresh-token-ttl-days: ${PROOFLY_AUTH_REFRESH_TOKEN_TTL_DAYS:7}
+    redis-prefix: ${PROOFLY_AUTH_REDIS_PREFIX:proofly}
