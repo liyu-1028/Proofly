@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/proofly?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
-    username: ${DB_USERNAME:proofly}
-    password: ${DB_PASSWORD:proofly123}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
