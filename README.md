@@ -95,7 +95,7 @@
 | 前端 | Vue 3、Vite、TypeScript |
 | 数据库 | MySQL 8.0 |
 | 缓存 | Redis 7.4.8（Docker 镜像建议 `redis:7.4.8-alpine`） |
-| 对象存储 | MinIO `RELEASE.2025-09-07T16-13-09Z`（Docker 镜像建议 `minio/minio:RELEASE.2025-09-07T16-13-09Z`） |
+| 对象存储 | MinIO `RELEASE.2024-07-16T23-46-41Z`（Docker 镜像建议 `minio/minio:RELEASE.2024-07-16T23-46-41Z`） |
 | 部署 | Docker、Docker Compose |
 | API 风格 | REST JSON |
 
@@ -107,7 +107,7 @@
 - Spring Boot 使用 3.5.x 最新补丁版本。该版本线兼顾长期维护、生态兼容和 AI 组件接入，不建议 MVP 阶段直接使用 Spring Boot 4.x。
 - MySQL 固定使用 8.0。开发、测试和部署环境尽量保持同一主版本，避免 SQL、排序规则和时间字段行为不一致。
 - Redis 固定使用 7.4.8。MVP 阶段只使用缓存、会话、短链状态、限流和轻量任务状态，Redis 7.4.x 功能足够且版本线成熟；Docker Compose 建议固定 `redis:7.4.8-alpine`，不要使用浮动的 `latest`。
-- MinIO 固定使用 `RELEASE.2025-09-07T16-13-09Z`。该版本有公开 Docker 多架构镜像，适合本地开发和 MVP 私有部署；生产环境部署前需要复核 MinIO 官方支持策略和安全发布情况，不要使用浮动的 `latest`。
+- MinIO 固定使用 2024 年旧版 `RELEASE.2024-07-16T23-46-41Z`。MVP 阶段优先选择较成熟的固定镜像，避免使用过新的 MinIO 版本或浮动的 `latest`；生产环境部署前仍需要复核镜像可用性、安全补丁和许可证策略。
 - 后续如接入 LangChain4j、Spring AI 或其他大模型问答能力，优先以独立业务模块接入，不影响审稿主流程。
 
 ### 后端分层
@@ -248,7 +248,7 @@ MVP 阶段优先使用 Docker Compose 管理运行环境：
 - `frontend`：Vue 3 构建后的静态资源，可由 Nginx 托管。
 - `mysql`：业务数据持久化。
 - `redis`：缓存、会话、短链状态和轻量任务状态，镜像建议 `redis:7.4.8-alpine`。
-- `minio`：设计稿文件、预览文件和导出文件存储，镜像建议 `minio/minio:RELEASE.2025-09-07T16-13-09Z`。
+- `minio`：设计稿文件、预览文件和导出文件存储，镜像建议 `minio/minio:RELEASE.2024-07-16T23-46-41Z`。
 
 MinIO 对象路径建议从一开始带门店、项目和版本维度：
 
