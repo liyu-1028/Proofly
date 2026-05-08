@@ -1,6 +1,6 @@
 package com.lyllink.proofly.config;
 
-import com.lyllink.proofly.auth.JwtAuthenticationFilter;
+import com.lyllink.proofly.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
