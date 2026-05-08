@@ -12,4 +12,8 @@ public record ApiResponse<T>(
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(0, "success", data, OffsetDateTime.now());
     }
+
+    public static <T> ApiResponse<T> fail(int code, String message) {
+        return new ApiResponse<>(code, message, null, OffsetDateTime.now());
+    }
 }

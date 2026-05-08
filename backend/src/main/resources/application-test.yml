@@ -18,3 +18,8 @@ minio:
 proofly:
   deployment-mode: single-store
   default-store-id: test-store
+  auth:
+    jwt-secret: proofly-test-jwt-secret-must-be-at-least-32-bytes
+    access-token-ttl-minutes: 120
+    refresh-token-ttl-days: 7
+    redis-prefix: proofly
