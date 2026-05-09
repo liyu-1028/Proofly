@@ -19,12 +19,13 @@ export class ApiError extends Error {
 }
 
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const { headers, ...requestInit } = init ?? {}
   const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...requestInit,
     headers: {
       'Content-Type': 'application/json',
-      ...init?.headers,
+      ...headers,
     },
-    ...init,
   })
 
   const payload = (await response.json().catch(() => null)) as ApiResponse<T> | null
