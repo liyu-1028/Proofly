@@ -65,3 +65,19 @@
 ## DELETE `/api/admin/review-links/{linkId}`
 
 用途：逻辑删除指定的审稿链接。
+
+## 前端调用位置
+
+M05 前端已接入本模块接口：
+
+| 前端文件 | 说明 |
+| --- | --- |
+| `frontend/src/api/review-links.ts` | 审稿链接接口封装 |
+| `frontend/src/views/admin/projects/ProjectDetailView.vue` | 项目详情页中的审稿链接面板 |
+
+前端实现说明：
+
+- 项目详情页支持查看历史审稿链接。
+- 支持生成新链接，并在创建成功后立即展示和复制完整 `url`。
+- 支持禁用、启用和删除审稿链接。
+- 历史链接不会展示完整 URL；若用户丢失链接，应重新生成。

@@ -208,7 +208,7 @@
 完成判定：
 
 - 可上传图片并保存文件元数据.
-| M05 客户审稿链接 | 已完成 | 审稿链接生成、哈希存储及管理（禁用/恢复/删除）后端接口已全部完成 |
+| M05 客户审稿链接 | 已完成 | 审稿链接生成、哈希存储及管理（禁用/恢复/删除）后端接口和前端管理入口已完成 |
 
 ...
 
@@ -229,6 +229,9 @@
 - 禁用链接接口：`PATCH /api/admin/review-links/{linkId}/disable`。
 - 启用链接接口：`PATCH /api/admin/review-links/{linkId}/enable`。
 - 删除链接接口：`DELETE /api/admin/review-links/{linkId}`。
+- 前端审稿链接接口封装：`frontend/src/api/review-links.ts`。
+- 项目详情页审稿链接面板：`frontend/src/views/admin/projects/ProjectDetailView.vue`。
+- 前端支持生成、复制、禁用、启用和删除审稿链接。
 - 安全策略：采用随机 32 位 Token，数据库仅存储 SHA-256 哈希值，确保即使数据库泄露也无法还原明文 Token。
 - 实体与 Mapper：`ReviewLinkEntity`, `ReviewLinkMapper`。
 - 访问日志准备：`ReviewAccessLogEntity`, `ReviewAccessLogMapper`（待公开接口模块调用）。

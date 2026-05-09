@@ -438,6 +438,64 @@ button:disabled {
   color: #5d6b78;
 }
 
+.review-link-copy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  border: 1px solid #dde4ea;
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.review-link-copy span {
+  min-width: 0;
+  flex: 1;
+  color: #182026;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.review-link-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.review-link-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-link-list li {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #e2e8ef;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.review-link-list li > div:first-child {
+  display: grid;
+  gap: 6px;
+}
+
+.review-link-list span,
+.review-link-list small {
+  color: #64727f;
+  font-size: 12px;
+}
+
+.review-link-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .table-link {
   color: #182026;
   font-weight: 700;

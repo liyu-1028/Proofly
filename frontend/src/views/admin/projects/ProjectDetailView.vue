@@ -6,6 +6,7 @@ import { Upload, View, Files } from '@element-plus/icons-vue'
 
 import { ApiError } from '@/api/http'
 import * as projectApi from '@/api/projects'
+import * as reviewLinkApi from '@/api/review-links'
 import * as versionApi from '@/api/version'
 import { getUsers, type UserResponse } from '@/api/admin'
 import { useSessionStore } from '@/stores/session'
@@ -27,11 +28,14 @@ const session = useSessionStore()
 const project = ref<ProjectResponse | null>(null)
 const users = ref<UserResponse[]>([])
 const versions = ref<versionApi.ProjectVersionResponse[]>([])
+const reviewLinks = ref<reviewLinkApi.ReviewLinkResponse[]>([])
 const loading = ref(false)
 const saving = ref(false)
 const uploading = ref(false)
+const creatingReviewLink = ref(false)
 const errorMessage = ref('')
 const editMode = ref(false)
+const latestCreatedLink = ref<reviewLinkApi.ReviewLinkResponse | null>(null)
 
 const projectId = computed(() => String(route.params.projectId))
 const designerUsers = computed(() => users.value.filter((user: UserResponse) => user.roles.includes('designer') || user.roles.includes('owner')))
@@ -46,6 +50,11 @@ const form = reactive({
   remark: '',
 })
 
+const reviewLinkForm = reactive({
+  expiresAt: '',
+  maxAccessCount: undefined as number | undefined,
+})
+
 function fillForm(data: ProjectResponse) {
   form.name = data.name
   form.customerName = data.customerName ?? ''
@@ -58,20 +67,26 @@ async function loadData() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const [projectData, userData, versionData] = await Promise.all([
+    const [projectData, userData, versionData, reviewLinkData] = await Promise.all([
       projectApi.getProject(projectId.value),
       getUsers().catch(() => []),
       versionApi.listVersions(projectId.value).catch(() => []),
+      reviewLinkApi.listReviewLinks(projectId.value).catch(() => []),
     ])
     project.value = projectData
     users.value = userData
     versions.value = versionData
+    reviewLinks.value = reviewLinkData
     fillForm(projectData)
   } catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : '项目加载失败'
   } finally {
     loading.value = false
   }
+}
+
+async function loadReviewLinks() {
+  reviewLinks.value = await reviewLinkApi.listReviewLinks(projectId.value)
 }
 
 async function submitEdit() {
@@ -161,6 +176,74 @@ function formatSize(bytes: number) {
   const sizes = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+function statusType(status: string) {
+  if (status === 'active') return 'success'
+  if (status === 'disabled') return 'warning'
+  return 'info'
+}
+
+function statusText(status: string) {
+  const map: Record<string, string> = {
+    active: '启用',
+    disabled: '停用',
+    expired: '已过期',
+  }
+  return map[status] ?? status
+}
+
+async function copyText(text?: string | null) {
+  if (!text) {
+    ElMessage.warning('该链接没有可复制的完整地址，请重新生成')
+    return
+  }
+  await navigator.clipboard.writeText(text)
+  ElMessage.success('审稿链接已复制')
+}
+
+async function createReviewLink() {
+  creatingReviewLink.value = true
+  try {
+    const created = await reviewLinkApi.createReviewLink(projectId.value, {
+      expiresAt: reviewLinkForm.expiresAt || undefined,
+      maxAccessCount: reviewLinkForm.maxAccessCount,
+    })
+    latestCreatedLink.value = created
+    reviewLinkForm.expiresAt = ''
+    reviewLinkForm.maxAccessCount = undefined
+    await loadReviewLinks()
+    await copyText(created.url)
+  } catch (error: any) {
+    ElMessage.error(error?.message || '生成审稿链接失败')
+  } finally {
+    creatingReviewLink.value = false
+  }
+}
+
+async function toggleReviewLink(link: reviewLinkApi.ReviewLinkResponse) {
+  try {
+    if (link.status === 'disabled') {
+      await reviewLinkApi.enableReviewLink(link.id)
+      ElMessage.success('审稿链接已启用')
+    } else {
+      await reviewLinkApi.disableReviewLink(link.id)
+      ElMessage.success('审稿链接已禁用')
+    }
+    await loadReviewLinks()
+  } catch (error: any) {
+    ElMessage.error(error?.message || '审稿链接状态更新失败')
+  }
+}
+
+async function removeReviewLink(link: reviewLinkApi.ReviewLinkResponse) {
+  try {
+    await reviewLinkApi.deleteReviewLink(link.id)
+    ElMessage.success('审稿链接已删除')
+    await loadReviewLinks()
+  } catch (error: any) {
+    ElMessage.error(error?.message || '删除审稿链接失败')
+  }
 }
 
 onMounted(() => {
@@ -284,12 +367,54 @@ onMounted(() => {
 
           <div class="panel" style="margin-top: 20px">
             <div class="section-header">
-              <h2>审稿链接</h2>
+              <div>
+                <h2>审稿链接</h2>
+                <p>完整链接只在生成时返回一次，请及时复制给客户。</p>
+              </div>
             </div>
-            <div class="empty-state">
-              <p>审稿链接模块将在后续接入</p>
-              <el-button type="primary" disabled>生成审稿链接</el-button>
+
+            <div v-if="latestCreatedLink?.url" class="review-link-copy">
+              <span>{{ latestCreatedLink.url }}</span>
+              <el-button type="primary" size="small" @click="copyText(latestCreatedLink.url)">复制</el-button>
             </div>
+
+            <div class="review-link-form">
+              <el-date-picker
+                v-model="reviewLinkForm.expiresAt"
+                type="datetime"
+                value-format="YYYY-MM-DDTHH:mm:ss"
+                placeholder="过期时间"
+                style="width: 100%"
+              />
+              <el-input-number
+                v-model="reviewLinkForm.maxAccessCount"
+                :min="1"
+                placeholder="最大访问次数"
+                style="width: 100%"
+              />
+              <el-button type="primary" :loading="creatingReviewLink" @click="createReviewLink">生成审稿链接</el-button>
+            </div>
+
+            <div v-if="reviewLinks.length === 0" class="empty-state">
+              暂无审稿链接
+            </div>
+            <ul v-else class="review-link-list">
+              <li v-for="link in reviewLinks" :key="link.id">
+                <div>
+                  <el-tag :type="statusType(link.status)" size="small">{{ statusText(link.status) }}</el-tag>
+                  <span>访问 {{ link.accessCount }} 次</span>
+                  <small>创建：{{ formatTime(link.createdAt) }}</small>
+                  <small>过期：{{ formatTime(link.expiresAt) }}</small>
+                </div>
+                <div class="review-link-actions">
+                  <el-button link type="primary" @click="copyText(link.url)">复制</el-button>
+                  <el-button link type="warning" @click="toggleReviewLink(link)">
+                    {{ link.status === 'disabled' ? '启用' : '禁用' }}
+                  </el-button>
+                  <el-button link type="danger" @click="removeReviewLink(link)">删除</el-button>
+                </div>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
