@@ -79,6 +79,15 @@ router.beforeEach(async (to) => {
     }
   }
 
+  // Role check
+  if (to.meta.requiredRoles) {
+    const roles = to.meta.requiredRoles as string[]
+    const hasRole = session.user?.roles.some((role) => roles.includes(role))
+    if (!hasRole) {
+      return '/admin/dashboard'
+    }
+  }
+
   if (to.name === 'login' && session.isAuthenticated) {
     return '/admin/dashboard'
   }

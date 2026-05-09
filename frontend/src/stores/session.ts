@@ -19,6 +19,8 @@ export const useSessionStore = defineStore('session', {
   getters: {
     isAuthenticated: (state) => Boolean(state.accessToken && state.user),
     displayName: (state) => state.user?.nickname || state.user?.username || '未登录',
+    isAdmin: (state) => state.user?.roles.includes('admin') ?? false,
+    canManageStaff: (state) => state.user?.roles.some(role => ['admin', 'owner'].includes(role)) ?? false,
   },
   actions: {
     applyAuth(response: authApi.AuthResponse) {
