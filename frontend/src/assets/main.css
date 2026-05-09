@@ -363,6 +363,18 @@ button:disabled {
   grid-column: 1 / -1;
 }
 
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #182026;
+  font-size: 14px;
+}
+
+.check-row input {
+  width: auto;
+}
+
 .section-header {
   display: flex;
   align-items: flex-start;
@@ -408,6 +420,14 @@ button:disabled {
   background: #f8fafc;
   color: #5d6b78;
   font-weight: 700;
+}
+
+.empty-state {
+  border: 1px solid #e2e8ef;
+  border-radius: 8px;
+  padding: 18px;
+  background: #f8fafc;
+  color: #5d6b78;
 }
 
 .table-link {

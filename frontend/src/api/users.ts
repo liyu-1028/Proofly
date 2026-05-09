@@ -14,10 +14,27 @@ export interface UserResponse {
   updatedAt: string
 }
 
+export interface UserCreatePayload {
+  username: string
+  nickname: string
+  phone?: string
+  email?: string
+  password: string
+  roleCodes: string[]
+}
+
 function authHeaders(accessToken: string) {
   return {
     Authorization: `Bearer ${accessToken}`,
   }
+}
+
+export function createUser(accessToken: string, payload: UserCreatePayload) {
+  return request<UserResponse>('/admin/users', {
+    method: 'POST',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify(payload),
+  })
 }
 
 export function listUsers(accessToken: string, keyword = '', status = 'active') {
