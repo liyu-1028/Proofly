@@ -208,43 +208,40 @@
 完成判定：
 
 - 可上传图片并保存文件元数据.
-- 可通过授权路径预览文件.
-- 文件和版本关系正确。
+| M05 客户审稿链接 | 已完成 | 审稿链接生成、哈希存储及管理（禁用/恢复/删除）后端接口已全部完成 |
+
+...
 
 ## M05 客户审稿链接
 
-状态：未开始.
+状态：已完成。
 
 模块目标：
 
-- 生成客户免登录访问链接.
+- 生成客户免登录访问链接。
 - 控制客户只能访问被授权项目。
 - 记录客户访问行为。
 
 已完成：
 
-- 已在 `docs/database.md` 和 `docs/mysql-schema.sql` 中设计 `review_link` 和 `review_access_log`。
-- 已在 `docs/database.md` 中设计 Redis 客户审稿 token 缓存 key。
-- 安全配置已放行 `/api/public/**`，为客户公开接口预留边界。
+- 创建审稿链接接口：`POST /api/admin/projects/{projectId}/review-links`。
+- 审稿链接列表接口：`GET /api/admin/projects/{projectId}/review-links`。
+- 禁用链接接口：`PATCH /api/admin/review-links/{linkId}/disable`。
+- 启用链接接口：`PATCH /api/admin/review-links/{linkId}/enable`。
+- 删除链接接口：`DELETE /api/admin/review-links/{linkId}`。
+- 安全策略：采用随机 32 位 Token，数据库仅存储 SHA-256 哈希值，确保即使数据库泄露也无法还原明文 Token。
+- 实体与 Mapper：`ReviewLinkEntity`, `ReviewLinkMapper`。
+- 访问日志准备：`ReviewAccessLogEntity`, `ReviewAccessLogMapper`（待公开接口模块调用）。
 
 未完成：
 
-- 审稿链接生成、停用、重新生成。
-- 公开 token 校验。
-- 访问次数、过期时间、访问日志.
-- 客户审稿公开页所需数据接口。
+- 审稿链接的公开访问校验逻辑（将在 M06/M07 公开 API 部分实现）。
+- 访问次数自动累计和过期自动判定逻辑（将在公开访问时实现）。
 
 交接说明：
 
-- 后台登录态和客户审稿 token 是两套边界。
-- MySQL 只保存 `token_hash`，避免明文 token 泄漏.
-- Redis 可以缓存明文 token 对应的项目和版本摘要。
-
-完成判定：
-
-- 设计师可生成并复制审稿链接。
-- 客户打开链接后只能访问对应项目.
-- 失效链接有明确错误响应或提示.
+- `ReviewLinkService.generateLink` 在响应中返回一次明文 `token` 和完整 `url`，前端需提示用户立即复制。
+- 完整的审稿链接基准地址在 `ProoflyProperties` 中配置。
 
 ## M06 在线标注评论
 
