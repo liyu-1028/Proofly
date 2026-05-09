@@ -28,7 +28,7 @@ const saving = ref(false)
 const errorMessage = ref('')
 const editMode = ref(false)
 
-const projectId = computed(() => Number(route.params.projectId))
+const projectId = computed(() => String(route.params.projectId))
 const designerUsers = computed(() => users.value.filter((user) => user.roles.includes('designer')))
 
 const form = reactive({
@@ -77,7 +77,7 @@ function toPayload(): ProjectPayload {
     name: form.name.trim(),
     customerName: form.customerName.trim() || undefined,
     customerContact: form.customerContact.trim() || undefined,
-    ownerUserId: Number(form.ownerUserId),
+    ownerUserId: form.ownerUserId,
     remark: form.remark.trim() || undefined,
   }
 }
@@ -138,7 +138,7 @@ function formatTime(value: string | null) {
 }
 
 onMounted(() => {
-  if (!Number.isFinite(projectId.value)) {
+  if (!projectId.value || projectId.value === 'undefined') {
     router.replace('/admin/projects')
     return
   }

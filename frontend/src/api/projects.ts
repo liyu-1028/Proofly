@@ -37,13 +37,13 @@ export function createProject(accessToken: string, payload: ProjectPayload) {
   })
 }
 
-export function getProject(accessToken: string, projectId: number) {
+export function getProject(accessToken: string, projectId: string) {
   return request<ProjectResponse>(`/admin/projects/${projectId}`, {
     headers: authHeaders(accessToken),
   })
 }
 
-export function updateProject(accessToken: string, projectId: number, payload: ProjectPayload) {
+export function updateProject(accessToken: string, projectId: string, payload: ProjectPayload) {
   return request<ProjectResponse>(`/admin/projects/${projectId}`, {
     method: 'PUT',
     headers: authHeaders(accessToken),
@@ -51,14 +51,14 @@ export function updateProject(accessToken: string, projectId: number, payload: P
   })
 }
 
-export function archiveProject(accessToken: string, projectId: number) {
+export function archiveProject(accessToken: string, projectId: string) {
   return request<ProjectResponse>(`/admin/projects/${projectId}/archive`, {
     method: 'PATCH',
     headers: authHeaders(accessToken),
   })
 }
 
-export function restoreProject(accessToken: string, projectId: number) {
+export function restoreProject(accessToken: string, projectId: string) {
   return request<ProjectResponse>(`/admin/projects/${projectId}/restore`, {
     method: 'PATCH',
     headers: authHeaders(accessToken),

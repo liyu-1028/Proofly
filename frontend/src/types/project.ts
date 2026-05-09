@@ -7,16 +7,16 @@ export type ProjectStatus =
   | 'archived'
 
 export interface ProjectResponse {
-  id: number
-  storeId: number
+  id: string
+  storeId: string
   name: string
   customerName: string | null
   customerContact: string | null
-  ownerUserId: number
+  ownerUserId: string
   ownerNickname: string | null
   status: ProjectStatus
-  currentVersionId: number | null
-  confirmedVersionId: number | null
+  currentVersionId: string | null
+  confirmedVersionId: string | null
   remark: string | null
   archivedAt: string | null
   createdAt: string
@@ -28,12 +28,12 @@ export interface ProjectPayload {
   name: string
   customerName?: string
   customerContact?: string
-  ownerUserId: number
+  ownerUserId: string
   remark?: string
 }
 
 export interface ProjectListQuery {
   keyword?: string
   status?: ProjectStatus | ''
-  ownerUserId?: number | ''
+  ownerUserId?: string
 }

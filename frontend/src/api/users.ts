@@ -1,8 +1,8 @@
 import { request } from './http'
 
 export interface UserResponse {
-  userId: number
-  storeId: number
+  userId: string
+  storeId: string
   username: string
   nickname: string
   phone: string | null

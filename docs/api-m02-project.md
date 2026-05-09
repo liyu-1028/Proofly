@@ -31,7 +31,7 @@
 | --- | --- | --- | --- |
 | `keyword` | string | 否 | 按项目名称、客户名称模糊搜索 |
 | `status` | string | 否 | 按项目状态筛选 |
-| `ownerUserId` | number | 否 | 按项目负责设计师 ID 筛选 |
+| `ownerUserId` | string | 否 | 按项目负责设计师 ID 筛选。BIGINT ID 前端按字符串传递，避免精度丢失 |
 
 响应数据：`ProjectResponse[]`。
 
@@ -39,16 +39,16 @@
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `id` | number | 项目 ID |
-| `storeId` | number | 门店 ID |
+| `id` | string | 项目 ID |
+| `storeId` | string | 门店 ID |
 | `name` | string | 项目名称 |
 | `customerName` | string | 客户名称 |
 | `customerContact` | string | 客户联系方式 |
-| `ownerUserId` | number | 项目负责设计师 ID |
+| `ownerUserId` | string | 项目负责设计师 ID |
 | `ownerNickname` | string | 项目负责人昵称 |
 | `status` | string | 项目状态：`draft`, `waiting_feedback`, `change_requested`, `waiting_confirm`, `confirmed`, `archived` |
-| `currentVersionId` | number | 当前展示版本 ID |
-| `confirmedVersionId` | number | 最终确认版本 ID |
+| `currentVersionId` | string | 当前展示版本 ID |
+| `confirmedVersionId` | string | 最终确认版本 ID |
 | `remark` | string | 项目备注 |
 | `archivedAt` | string | 归档时间 |
 | `createdAt` | string | 创建时间 |
@@ -66,7 +66,7 @@
 | `name` | string | 是 | 项目名称 |
 | `customerName` | string | 否 | 客户名称 |
 | `customerContact` | string | 否 | 客户联系方式 |
-| `ownerUserId` | number | 是 | 项目负责设计师 ID，必须是当前门店下状态为 `active` 且拥有 `designer` 角色的用户 |
+| `ownerUserId` | string | 是 | 项目负责设计师 ID，必须是当前门店下状态为 `active` 且拥有 `designer` 角色的用户。前端必须按字符串提交 |
 | `remark` | string | 否 | 备注 |
 
 响应数据：`ProjectResponse`。

@@ -104,7 +104,7 @@ function toPayload(): ProjectPayload {
     name: form.name.trim(),
     customerName: form.customerName.trim() || undefined,
     customerContact: form.customerContact.trim() || undefined,
-    ownerUserId: Number(form.ownerUserId),
+    ownerUserId: form.ownerUserId,
     remark: form.remark.trim() || undefined,
   }
 }
