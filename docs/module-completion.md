@@ -21,9 +21,9 @@
 | 模块 | 状态 | 当前结论 |
 | --- | --- | --- |
 | M01 账号、门店与权限 | 已完成 | 登录、基础鉴权、后端管理接口、前端管理功能及基于角色的访问控制已全部完成 |
-| M02 审稿项目 | 已完成 | 项目生命周期管理的后端接口和前端页面已完成 |
-| M03 设计稿版本 | 未开始 | 暂无业务实现 |
-| M04 文件上传、存储与预览 | 未开始 | 已有数据与路径设计，暂无业务实现 |
+| M02 审稿项目 | 已完成 | 项目生命周期管理的后端接口和前端页面已全部实现，包括创建、编辑、列表、详情及归档/恢复 |
+| M03 设计稿版本 | 已完成 | 版本上传、递增管理及前端预览切换功能已全部完成 |
+| M04 文件上传、存储与预览 | 已完成 | 已集成 MinIO 存储，完成文件元数据持久化及受控预览 URL 生成功能 |
 | M05 客户审稿链接 | 未开始 | 已有数据与缓存设计，暂无业务实现 |
 | M06 在线标注评论 | 未开始 | 已有数据设计，暂无业务实现 |
 | M07 客户确认定稿 | 未开始 | 已有数据设计，暂无业务实现 |
@@ -71,8 +71,7 @@
 - JWT + Redis 的 access token 和 refresh token 会话机制.
 - Redis 黑名单，用于登出后使 access token 失效。
 - Spring Security 基础鉴权过滤器。
-- `/api/health`、`/api/public/**`、OpenAPI 文档路径放行。
-- `/api/auth/me`、`/api/auth/logout`、`/api/admin/**` 需要后台登录。
+- `/api/health`、`/api/public/**`、OpenAPI 文档路径放行.
 - `CurrentUser` 上下文，包含 `userId`、`storeId`、`roles`、`tokenId`。
 - `user`、`role`、`user_role`、`store` 的实体和数据访问 Mapper.
 - `docs/auth-seed.sql`，提供本地默认门店、角色和 `admin` 账号。
@@ -97,9 +96,7 @@
 - 门店员工可登录后台。
 - 角色权限生效：`admin` 和 `owner` 可管理员工，`designer` 无法看到且无法进入员工管理页面。
 - 后台接口能识别当前用户和门店并进行权限校验（403）。
-| M02 审稿项目 | 已完成 | 项目生命周期管理的后端接口和前端页面已全部实现，包括创建、编辑、列表、详情及归档/恢复 |
-
-...
+- 用户停用或门店停用时不能继续访问。
 
 ## M02 审稿项目
 
@@ -134,7 +131,7 @@
 交接说明：
 
 - 每次创建或关键状态变更都会记录到 `project_status_log`。
-- 项目列表支持按关键字、状态和负责人筛选。
+- 项目列表支持按关键字、状态和负责人筛选.
 - 前端负责人下拉使用 M01 员工列表接口提供选项；如果员工接口不可用，会回退显示当前登录用户。
 - 归档后的项目不允许编辑。
 
@@ -144,26 +141,33 @@
 - 项目详情能展示客户信息、负责人、状态、当前版本和确认状态。
 - 项目状态流转有记录。
 
-
 ## M03 设计稿版本
 
-状态：未开始。
+状态：已完成。
 
-- 已在 `docs/database.md` 和 `docs/mysql-schema.sql` 中设计 `project_version`。
-- 已在模块列表中定义版本不可覆盖、标注和确认必须绑定具体版本.
+模块目标：
+
+- 管理项目下的设计稿版本。
+- 确保每次上传都是独立版本，历史版本不可覆盖。
+- 自动维护版本号递增。
+
+已完成：
+
+- 版本上传接口：`POST /api/admin/projects/{projectId}/versions`。
+- 版本列表接口：`GET /api/admin/projects/{projectId}/versions`。
+- 版本元数据与文件元数据的事务性绑定。
+- 前端版本列表展示与预览切换。
+- 上传新版时自动更新项目 `current_version_id`。
+- 项目状态自动流转逻辑：上传第一版后 `draft` 变更为 `waiting_feedback`。
 
 未完成：
 
-- 上传新版本业务流程。
-- 版本列表、版本详情、当前版本切换。
-- 与文件元数据、MinIO 对象的事务编排。
-- 已确认版本的保护规则。
+- 锁定已确认版本，防止在此基础上继续上传（需 M07 确认定稿模块配合）。
 
 交接说明：
 
-- 版本号应在项目内递增.
-- 当前版本建议由 `project.current_version_id` 显式保存。
-- 上传新版不能删除旧版本、旧文件和旧标注。
+- `version_no` 在项目内自动递增，前端无需传递。
+- 只有未归档、未定稿的项目允许上传新版本。
 
 完成判定：
 
@@ -173,7 +177,7 @@
 
 ## M04 文件上传、存储与预览
 
-状态：未开始.
+状态：已完成。
 
 模块目标：
 
@@ -184,23 +188,22 @@
 
 已完成：
 
-- 已在 `docs/database.md` 和 `docs/mysql-schema.sql` 中设计 `file_object`。
-- 已在 `docs/database.md` 中定义 MinIO 对象路径：`original`、`preview`、`attachment`、`confirmation`、`temp/uploads`。
-- README 和 AGENT 已固定 MinIO 推荐镜像版本和对象路径方向.
+- MinIO 客户端集成与 Spring Bean 配置。
+- `putObject` 流式上传功能封装。
+- 预签名预览 URL 生成（有效期 1 小时）。
+- 文件元数据表 `file_object` 持久化。
+- 结构化存储路径：`stores/{storeId}/projects/{projectId}/versions/{versionId}/{fileId}-{filename}`。
+- 前端 `http.ts` 适配 `FormData` 格式，支持多部分文件上传。
 
 未完成：
 
-- 文件上传接口.
-- MinIO 客户端封装。
-- 文件类型、大小、MIME、hash 校验。
-- 预览文件生成和访问控制.
-- 文件上传失败后的清理策略。
+- 文件上传后的病毒扫描或高级格式校验（MVP 可选）。
+- 生成图片预览图（缩略图），目前直接使用原图预览。
 
 交接说明：
 
-- MySQL 只保存 `bucket`、`object_key`、文件名、大小、类型、hash 和业务关系。
-- MinIO object key 必须包含 `storeId`、`projectId`、`versionId`。
-- 已确认版本关联文件默认不可物理删除.
+- 预览 URL 由后端实时生成，不应存储在数据库中以防过期。
+- 存储路径严格遵循门店和项目隔离规范。
 
 完成判定：
 
@@ -323,7 +326,7 @@
 
 已完成：
 
-- 已在 `docs/database.md` 和 `docs/mysql-schema.sql` 中设计 `audit_log`、`review_access_log`、`confirmation_record`。
+- 已 in `docs/database.md` and `docs/mysql-schema.sql` 中设计 `audit_log`、`review_access_log`、`confirmation_record`。
 - 已明确确认记录、审计日志、访问日志不只写 Redis，必须落库。
 
 未完成：
@@ -445,7 +448,7 @@
 - 后端 Spring Boot 工程骨架。
 - Maven 使用约定：`backend/MAVEN.md`。
 - 健康检查接口：`GET /api/health`。
-- OpenAPI 依赖和基础路径配置。
+- OpenAPI 依赖和基础路径配置.
 - MySQL 数据设计文档：`docs/database.md`。
 - MySQL 建表 SQL：`docs/mysql-schema.sql`。
 - 认证基础数据 SQL：`docs/auth-seed.sql`。
