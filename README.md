@@ -93,6 +93,7 @@
 | 后端分层 | Controller、Service、DAO、Domain/DTO |
 | 数据访问 | MyBatis-Plus，复杂查询可补充 MyBatis XML |
 | 前端 | Vue 3、Vite、TypeScript |
+| 前端组件库 | Element Plus、@element-plus/icons-vue |
 | 数据库 | MySQL 8.0 |
 | 缓存 | Redis 7.4.8（Docker 镜像建议 `redis:7.4.8-alpine`） |
 | 对象存储 | MinIO `RELEASE.2024-07-16T23-46-41Z`（Docker 镜像建议 `minio/minio:RELEASE.2024-07-16T23-46-41Z`） |

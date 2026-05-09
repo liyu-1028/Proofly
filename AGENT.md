@@ -26,6 +26,7 @@
 | --- | --- |
 | 后端 | JDK 17、Spring Boot 3.5.x |
 | 前端 | Vue 3、Vite、TypeScript |
+| 前端组件库 | Element Plus、@element-plus/icons-vue |
 | API | REST JSON |
 | 数据访问 | DAO 层基于 MyBatis-Plus Mapper，复杂查询可使用 MyBatis XML |
 | 数据库 | MySQL 8.0 |
@@ -174,6 +175,8 @@ stores/{storeId}/projects/{projectId}/versions/{versionId}/{filename}
 ## 前端约定
 
 前端默认使用 Vue 3、Vite、TypeScript。
+
+组件库固定使用 Element Plus，并配套使用 `@element-plus/icons-vue`。后台表单、表格、弹窗、分页、上传、消息提示、标签和基础交互组件优先使用 Element Plus；只有审稿预览、标注画布等强业务定制区域再编写自定义组件。Element Plus 主题色应与 `docs/frontend-style-guide.md` 中的青绿色主色保持一致。
 
 推荐结构：
 

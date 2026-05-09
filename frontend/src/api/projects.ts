@@ -2,12 +2,6 @@ import { request } from './http'
 
 import type { ProjectListQuery, ProjectPayload, ProjectResponse } from '@/types/project'
 
-function authHeaders(accessToken: string) {
-  return {
-    Authorization: `Bearer ${accessToken}`,
-  }
-}
-
 function toQueryString(query: ProjectListQuery) {
   const params = new URLSearchParams()
   if (query.keyword?.trim()) {
@@ -23,44 +17,36 @@ function toQueryString(query: ProjectListQuery) {
   return value ? `?${value}` : ''
 }
 
-export function listProjects(accessToken: string, query: ProjectListQuery = {}) {
-  return request<ProjectResponse[]>(`/admin/projects${toQueryString(query)}`, {
-    headers: authHeaders(accessToken),
-  })
+export function listProjects(query: ProjectListQuery = {}) {
+  return request<ProjectResponse[]>(`/admin/projects${toQueryString(query)}`)
 }
 
-export function createProject(accessToken: string, payload: ProjectPayload) {
+export function createProject(payload: ProjectPayload) {
   return request<ProjectResponse>('/admin/projects', {
     method: 'POST',
-    headers: authHeaders(accessToken),
     body: JSON.stringify(payload),
   })
 }
 
-export function getProject(accessToken: string, projectId: string) {
-  return request<ProjectResponse>(`/admin/projects/${projectId}`, {
-    headers: authHeaders(accessToken),
-  })
+export function getProject(projectId: string) {
+  return request<ProjectResponse>(`/admin/projects/${projectId}`)
 }
 
-export function updateProject(accessToken: string, projectId: string, payload: ProjectPayload) {
+export function updateProject(projectId: string, payload: ProjectPayload) {
   return request<ProjectResponse>(`/admin/projects/${projectId}`, {
     method: 'PUT',
-    headers: authHeaders(accessToken),
     body: JSON.stringify(payload),
   })
 }
 
-export function archiveProject(accessToken: string, projectId: string) {
+export function archiveProject(projectId: string) {
   return request<ProjectResponse>(`/admin/projects/${projectId}/archive`, {
     method: 'PATCH',
-    headers: authHeaders(accessToken),
   })
 }
 
-export function restoreProject(accessToken: string, projectId: string) {
+export function restoreProject(projectId: string) {
   return request<ProjectResponse>(`/admin/projects/${projectId}/restore`, {
     method: 'PATCH',
-    headers: authHeaders(accessToken),
   })
 }

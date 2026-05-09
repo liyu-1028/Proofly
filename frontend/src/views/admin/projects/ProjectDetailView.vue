@@ -34,7 +34,7 @@ const errorMessage = ref('')
 const editMode = ref(false)
 
 const projectId = computed(() => String(route.params.projectId))
-const designerUsers = computed(() => users.value.filter((user) => user.roles.includes('designer') || user.roles.includes('owner')))
+const designerUsers = computed(() => users.value.filter((user: UserResponse) => user.roles.includes('designer') || user.roles.includes('owner')))
 
 const currentVersion = computed(() => versions.value.find(v => v.isCurrent) || versions.value[0])
 

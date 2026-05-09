@@ -121,7 +121,7 @@
 - 前端项目类型定义：`frontend/src/types/project.ts`。
 - 前端路由：`/admin/projects` 和 `/admin/projects/:projectId`。
 - 项目状态流转日志记录：`project_status_log`。
-- 基于 `store_id` 的数据隔离和多租户支持。
+- 基于 `store_id` 的数据隔离和多租户支持.
 - 项目负责人校验逻辑。
 
 未完成：
@@ -155,7 +155,7 @@
 
 - 版本上传接口：`POST /api/admin/projects/{projectId}/versions`。
 - 版本列表接口：`GET /api/admin/projects/{projectId}/versions`。
-- 版本元数据与文件元数据的事务性绑定。
+- 版本元数据与文件元数据的事务性绑定.
 - 前端版本列表展示与预览切换。
 - 上传新版时自动更新项目 `current_version_id`。
 - 项目状态自动流转逻辑：上传第一版后 `draft` 变更为 `waiting_feedback`。
@@ -189,7 +189,7 @@
 已完成：
 
 - MinIO 客户端集成与 Spring Bean 配置。
-- `putObject` 流式上传功能封装。
+- `putObject` 流式上传功能封装.
 - 预签名预览 URL 生成（有效期 1 小时）。
 - 文件元数据表 `file_object` 持久化。
 - 结构化存储路径：`stores/{storeId}/projects/{projectId}/versions/{versionId}/{fileId}-{filename}`。
@@ -243,7 +243,7 @@
 完成判定：
 
 - 设计师可生成并复制审稿链接。
-- 客户打开链接后只能访问对应项目。
+- 客户打开链接后只能访问对应项目.
 - 失效链接有明确错误响应或提示.
 
 ## M06 在线标注评论
@@ -326,7 +326,7 @@
 
 已完成：
 
-- 已 in `docs/database.md` and `docs/mysql-schema.sql` 中设计 `audit_log`、`review_access_log`、`confirmation_record`。
+- 已在 `docs/database.md` 和 `docs/mysql-schema.sql` 中设计 `audit_log`、`review_access_log`、`confirmation_record`。
 - 已明确确认记录、审计日志、访问日志不只写 Redis，必须落库。
 
 未完成：
@@ -472,7 +472,7 @@
 
 完成判定：
 
-- 新开发者能按文档一键启动基础依赖和后端。
+- 新开发者能按文档一键启动基础依赖和后端.
 - API 文档能展示主要接口.
 - 数据库初始化和环境变量配置有明确流程。
 
@@ -500,7 +500,7 @@
 完成判定：
 
 - 可管理套餐和订阅.
-- 可统计门店用量并生成账单记录.
+- 可统计门店用量并生成账单记录。
 
 ## M14 AI 辅助能力
 
