@@ -121,6 +121,44 @@ public class ReviewLinkService {
         reviewLinkMapper.updateById(entity);
     }
 
+    /**
+     * Validate a token and return the link entity.
+     */
+    public ReviewLinkEntity validateToken(String token) {
+        String tokenHash = SecurityUtils.sha256(token);
+        ReviewLinkEntity entity = reviewLinkMapper.selectOne(new LambdaQueryWrapper<ReviewLinkEntity>()
+                .eq(ReviewLinkEntity::getTokenHash, tokenHash)
+                .eq(ReviewLinkEntity::getDeleted, false)
+                .last("LIMIT 1"));
+
+        if (entity == null || !"active".equals(entity.getStatus())) {
+            throw BusinessException.unauthorized("审稿链接无效或已被禁用");
+        }
+
+        if (entity.getExpiresAt() != null && entity.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw BusinessException.unauthorized("审稿链接已过期");
+        }
+
+        if (entity.getMaxAccessCount() != null && entity.getAccessCount() >= entity.getMaxAccessCount()) {
+            throw BusinessException.unauthorized("审稿链接访问次数已达上限");
+        }
+
+        return entity;
+    }
+
+    /**
+     * Record an access.
+     */
+    @Transactional
+    public void incrementAccessCount(Long linkId) {
+        ReviewLinkEntity entity = reviewLinkMapper.selectById(linkId);
+        if (entity != null) {
+            entity.setAccessCount(entity.getAccessCount() + 1);
+            entity.setLastAccessAt(LocalDateTime.now());
+            reviewLinkMapper.updateById(entity);
+        }
+    }
+
     private ProjectEntity requiredProject(Long storeId, Long projectId) {
         ProjectEntity project = projectMapper.selectOne(new LambdaQueryWrapper<ProjectEntity>()
                 .eq(ProjectEntity::getStoreId, storeId)

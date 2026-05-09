@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Upload, View, Files } from '@element-plus/icons-vue'
+import { ChatLineRound, CircleCheck, Clock, Files, Upload, View } from '@element-plus/icons-vue'
 
+import * as annotationApi from '@/api/annotations'
+import * as auditApi from '@/api/audit'
+import * as confirmationApi from '@/api/confirmations'
 import { ApiError } from '@/api/http'
 import * as projectApi from '@/api/projects'
 import * as reviewLinkApi from '@/api/review-links'
@@ -29,10 +32,14 @@ const project = ref<ProjectResponse | null>(null)
 const users = ref<UserResponse[]>([])
 const versions = ref<versionApi.ProjectVersionResponse[]>([])
 const reviewLinks = ref<reviewLinkApi.ReviewLinkResponse[]>([])
+const annotations = ref<annotationApi.AnnotationResponse[]>([])
+const confirmation = ref<confirmationApi.ConfirmationRecordResponse | null>(null)
+const timeline = ref<auditApi.AuditLogResponse[]>([])
 const loading = ref(false)
 const saving = ref(false)
 const uploading = ref(false)
 const creatingReviewLink = ref(false)
+const loadingAnnotations = ref(false)
 const errorMessage = ref('')
 const editMode = ref(false)
 const latestCreatedLink = ref<reviewLinkApi.ReviewLinkResponse | null>(null)
@@ -67,16 +74,20 @@ async function loadData() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const [projectData, userData, versionData, reviewLinkData] = await Promise.all([
+    const [projectData, userData, versionData, reviewLinkData, confirmationData, timelineData] = await Promise.all([
       projectApi.getProject(projectId.value),
       getUsers().catch(() => []),
       versionApi.listVersions(projectId.value).catch(() => []),
       reviewLinkApi.listReviewLinks(projectId.value).catch(() => []),
+      confirmationApi.getProjectConfirmation(projectId.value).catch(() => null),
+      auditApi.getProjectTimeline(projectId.value).catch(() => []),
     ])
     project.value = projectData
     users.value = userData
     versions.value = versionData
     reviewLinks.value = reviewLinkData
+    confirmation.value = confirmationData
+    timeline.value = timelineData
     fillForm(projectData)
   } catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : '项目加载失败'
@@ -87,6 +98,34 @@ async function loadData() {
 
 async function loadReviewLinks() {
   reviewLinks.value = await reviewLinkApi.listReviewLinks(projectId.value)
+}
+
+async function loadAnnotations(versionId?: string) {
+  if (!versionId) {
+    annotations.value = []
+    return
+  }
+  loadingAnnotations.value = true
+  try {
+    annotations.value = await annotationApi.listProjectVersionAnnotations(projectId.value, versionId)
+  } catch (error: any) {
+    ElMessage.error(error?.message || '标注加载失败')
+    annotations.value = []
+  } finally {
+    loadingAnnotations.value = false
+  }
+}
+
+async function loadProjectTimeline() {
+  timeline.value = await auditApi.getProjectTimeline(projectId.value)
+}
+
+function selectVersion(row: versionApi.ProjectVersionResponse) {
+  versions.value.forEach(v => {
+    v.isCurrent = false
+  })
+  row.isCurrent = true
+  void loadAnnotations(row.id)
 }
 
 async function submitEdit() {
@@ -147,6 +186,7 @@ async function handleUpload(options: any) {
     // Refresh project to get updated status and currentVersionId
     const updatedProject = await projectApi.getProject(projectId.value)
     project.value = updatedProject
+    await loadProjectTimeline().catch(() => undefined)
     ElMessage.success('新版本上传成功')
   } catch (error: any) {
     ElMessage.error(error.message || '上传失败')
@@ -191,6 +231,48 @@ function statusText(status: string) {
     expired: '已过期',
   }
   return map[status] ?? status
+}
+
+function annotationStatusText(status: annotationApi.AnnotationStatus) {
+  const map: Record<annotationApi.AnnotationStatus, string> = {
+    open: '待处理',
+    resolved: '已处理',
+    ignored: '已忽略',
+  }
+  return map[status] ?? status
+}
+
+function annotationStatusType(status: annotationApi.AnnotationStatus) {
+  if (status === 'resolved') return 'success'
+  if (status === 'ignored') return 'info'
+  return 'warning'
+}
+
+function annotationMarkerStyle(annotation: annotationApi.AnnotationResponse) {
+  return {
+    left: `${Number(annotation.xRatio) * 100}%`,
+    top: `${Number(annotation.yRatio) * 100}%`,
+  }
+}
+
+function operatorText(log: auditApi.AuditLogResponse) {
+  if (log.operatorName) return log.operatorName
+  if (log.operatorType === 'customer') return '客户'
+  if (log.operatorType === 'system') return '系统'
+  return '用户'
+}
+
+async function updateAnnotationStatus(annotation: annotationApi.AnnotationResponse, status: 'resolved' | 'ignored') {
+  if (!currentVersion.value) return
+  try {
+    await annotationApi.updateAnnotationStatus(projectId.value, currentVersion.value.id, annotation.id, status)
+    annotation.status = status
+    annotation.resolvedAt = new Date().toISOString()
+    ElMessage.success(status === 'resolved' ? '已标记处理完成' : '已忽略该意见')
+    await loadProjectTimeline().catch(() => undefined)
+  } catch (error: any) {
+    ElMessage.error(error?.message || '标注状态更新失败')
+  }
 }
 
 async function copyText(text?: string | null) {
@@ -253,6 +335,13 @@ onMounted(() => {
   }
   void loadData()
 })
+
+watch(
+  () => currentVersion.value?.id,
+  versionId => {
+    void loadAnnotations(versionId)
+  },
+)
 </script>
 
 <template>
@@ -301,7 +390,18 @@ onMounted(() => {
 
             <div class="preview-container">
               <div v-if="currentVersion" class="preview-box">
-                <img v-if="currentVersion.fileExt?.toLowerCase() !== 'pdf'" :src="currentVersion.previewUrl" alt="预览图" />
+                <template v-if="currentVersion.fileExt?.toLowerCase() !== 'pdf'">
+                  <img :src="currentVersion.previewUrl" alt="预览图" />
+                  <span
+                    v-for="(annotation, index) in annotations"
+                    :key="annotation.id"
+                    class="annotation-marker"
+                    :class="annotation.status"
+                    :style="annotationMarkerStyle(annotation)"
+                  >
+                    {{ index + 1 }}
+                  </span>
+                </template>
                 <div v-else class="pdf-placeholder">
                   <el-icon :size="48"><Files /></el-icon>
                   <p>PDF 文件，点击下方链接下载查看</p>
@@ -335,7 +435,7 @@ onMounted(() => {
               </el-table-column>
               <el-table-column label="操作" width="100" fixed="right">
                 <template #default="{ row }">
-                  <el-button link type="primary" :icon="View" @click="versions.forEach(v => v.isCurrent = false); row.isCurrent = true">
+                  <el-button link type="primary" :icon="View" @click="selectVersion(row)">
                     预览
                   </el-button>
                 </template>
@@ -365,7 +465,73 @@ onMounted(() => {
             </dl>
           </div>
 
-          <div class="panel" style="margin-top: 20px">
+          <div class="panel side-panel">
+            <div class="section-header">
+              <div>
+                <h2>定稿确认</h2>
+                <p>客户确认当前项目后的记录。</p>
+              </div>
+              <el-icon v-if="confirmation" class="success-icon"><CircleCheck /></el-icon>
+            </div>
+            <div v-if="confirmation" class="confirmation-box">
+              <strong>{{ confirmation.customerName }}</strong>
+              <span>{{ formatTime(confirmation.confirmedAt) }} 确认</span>
+              <small>版本 ID：{{ confirmation.versionId }}</small>
+            </div>
+            <div v-else class="empty-inline">尚未确认定稿</div>
+          </div>
+
+          <div class="panel side-panel">
+            <div class="section-header">
+              <div>
+                <h2>修改意见</h2>
+                <p>当前预览版本的客户标注。</p>
+              </div>
+              <el-icon><ChatLineRound /></el-icon>
+            </div>
+            <div v-if="loadingAnnotations" class="empty-inline">正在加载标注...</div>
+            <div v-else-if="annotations.length === 0" class="empty-inline">当前版本暂无修改意见</div>
+            <ol v-else class="annotation-list">
+              <li v-for="(annotation, index) in annotations" :key="annotation.id">
+                <div class="annotation-head">
+                  <span>#{{ index + 1 }} {{ annotation.customerName || '客户' }}</span>
+                  <el-tag :type="annotationStatusType(annotation.status)" size="small">
+                    {{ annotationStatusText(annotation.status) }}
+                  </el-tag>
+                </div>
+                <p>{{ annotation.content }}</p>
+                <small>{{ formatTime(annotation.createdAt) }}</small>
+                <div v-if="annotation.status === 'open'" class="annotation-actions">
+                  <el-button size="small" type="primary" link @click="updateAnnotationStatus(annotation, 'resolved')">
+                    标记已处理
+                  </el-button>
+                  <el-button size="small" type="warning" link @click="updateAnnotationStatus(annotation, 'ignored')">
+                    忽略
+                  </el-button>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="panel side-panel">
+            <div class="section-header">
+              <div>
+                <h2>项目动态</h2>
+                <p>审稿和确认流程记录。</p>
+              </div>
+              <el-icon><Clock /></el-icon>
+            </div>
+            <div v-if="timeline.length === 0" class="empty-inline">暂无动态记录</div>
+            <ol v-else class="timeline-list">
+              <li v-for="log in timeline" :key="log.id">
+                <span>{{ formatTime(log.createdAt) }}</span>
+                <strong>{{ operatorText(log) }}</strong>
+                <p>{{ log.summary }}</p>
+              </li>
+            </ol>
+          </div>
+
+          <div class="panel side-panel">
             <div class="section-header">
               <div>
                 <h2>审稿链接</h2>
@@ -522,6 +688,34 @@ onMounted(() => {
   display: block;
 }
 
+.preview-box {
+  position: relative;
+}
+
+.annotation-marker {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.18);
+}
+
+.annotation-marker.resolved {
+  background: #16a34a;
+}
+
+.annotation-marker.ignored {
+  background: #64748b;
+}
+
 .pdf-placeholder, .empty-preview {
   text-align: center;
   color: #909399;
@@ -544,6 +738,126 @@ onMounted(() => {
   margin-top: 4px;
 }
 
+.side-panel {
+  margin-top: 20px;
+}
+
+.success-icon {
+  color: #16a34a;
+}
+
+.confirmation-box,
+.timeline-list,
+.annotation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.confirmation-box strong {
+  color: #15803d;
+}
+
+.confirmation-box span,
+.confirmation-box small,
+.timeline-list span,
+.annotation-list small {
+  color: #909399;
+  font-size: 12px;
+}
+
+.empty-inline {
+  color: #909399;
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.annotation-list,
+.timeline-list,
+.review-link-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.annotation-list li,
+.timeline-list li,
+.review-link-list li {
+  padding: 12px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.annotation-head,
+.review-link-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.annotation-head span {
+  font-weight: 600;
+}
+
+.annotation-list p,
+.timeline-list p {
+  margin: 8px 0;
+  color: #344054;
+  line-height: 1.5;
+}
+
+.annotation-actions {
+  margin-top: 8px;
+}
+
+.timeline-list strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.review-link-copy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  margin-bottom: 12px;
+  background: #eef6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+}
+
+.review-link-copy span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #1d4ed8;
+  font-size: 12px;
+}
+
+.review-link-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.review-link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-link-list li > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .empty-state {
   text-align: center;
   padding: 40px 0;
@@ -558,5 +872,11 @@ onMounted(() => {
   background: #fff;
   padding: 40px;
   border-radius: 8px;
+}
+
+@media (max-width: 1024px) {
+  .project-layout {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

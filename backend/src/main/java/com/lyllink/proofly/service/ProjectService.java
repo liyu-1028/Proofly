@@ -116,7 +116,11 @@ public class ProjectService {
     }
 
     public ProjectResponse detail(CurrentUser currentUser, Long projectId) {
-        ProjectEntity project = requiredProject(currentUser.storeId(), projectId);
+        return detailInternal(currentUser.storeId(), projectId);
+    }
+
+    public ProjectResponse detailInternal(Long storeId, Long projectId) {
+        ProjectEntity project = requiredProject(storeId, projectId);
         
         Set<Long> userIds = Stream.of(project.getOwnerUserId(), project.getCreatedBy())
                 .filter(java.util.Objects::nonNull)
