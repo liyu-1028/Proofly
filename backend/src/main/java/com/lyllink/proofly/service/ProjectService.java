@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,7 +78,8 @@ public class ProjectService {
 
         // Fetch user nicknames for owners and creators
         Set<Long> userIds = projects.stream()
-                .flatMap(p -> Set.of(p.getOwnerUserId(), p.getCreatedBy()).stream())
+                .flatMap(p -> Stream.of(p.getOwnerUserId(), p.getCreatedBy()))
+                .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toSet());
         Map<Long, String> nicknames = userMapper.selectList(new LambdaQueryWrapper<UserEntity>()
                 .in(UserEntity::getId, userIds)
@@ -116,7 +118,9 @@ public class ProjectService {
     public ProjectResponse detail(CurrentUser currentUser, Long projectId) {
         ProjectEntity project = requiredProject(currentUser.storeId(), projectId);
         
-        Set<Long> userIds = Set.of(project.getOwnerUserId(), project.getCreatedBy());
+        Set<Long> userIds = Stream.of(project.getOwnerUserId(), project.getCreatedBy())
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
         Map<Long, String> nicknames = userMapper.selectList(new LambdaQueryWrapper<UserEntity>()
                 .in(UserEntity::getId, userIds)
                 .select(UserEntity::getId, UserEntity::getNickname))
