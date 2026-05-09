@@ -19,13 +19,25 @@ export class ApiError extends Error {
 }
 
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const { headers, ...requestInit } = init ?? {}
+  const { headers: initHeaders, body, ...requestInit } = init ?? {}
+  
+  const headers = new Headers(initHeaders)
+  
+  // Only set application/json if body is not FormData and no Content-Type is provided
+  if (!(body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json')
+  }
+
+  // Inject Authorization header if token exists
+  const token = localStorage.getItem('proofly_access_token')
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...requestInit,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
+    body,
+    headers,
   })
 
   const payload = (await response.json().catch(() => null)) as ApiResponse<T> | null

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
 import { ApiError } from '@/api/http'
 import * as projectApi from '@/api/projects'
-import { listUsers, type UserResponse } from '@/api/users'
+import { getUsers, type UserResponse } from '@/api/admin'
 import { useSessionStore } from '@/stores/session'
 import type { ProjectListQuery, ProjectPayload, ProjectResponse, ProjectStatus } from '@/types/project'
 
@@ -58,20 +59,13 @@ const metrics = computed(() => ({
   confirmed: projects.value.filter((project) => project.status === 'confirmed').length,
 }))
 
-const designerUsers = computed(() => users.value.filter((user) => user.roles.includes('designer')))
-
-function token() {
-  if (!session.accessToken) {
-    throw new Error('缺少访问令牌')
-  }
-  return session.accessToken
-}
+const designerUsers = computed(() => users.value.filter((user) => user.roles.includes('designer') || user.roles.includes('owner')))
 
 function resetForm() {
   form.name = ''
   form.customerName = ''
   form.customerContact = ''
-  form.ownerUserId = session.user?.roles.includes('designer') && session.user.userId ? String(session.user.userId) : ''
+  form.ownerUserId = (session.user?.roles.includes('designer') || session.user?.roles.includes('owner')) && session.user.userId ? String(session.user.userId) : ''
   form.remark = ''
 }
 
@@ -113,7 +107,7 @@ async function loadProjects() {
   loading.value = true
   errorMessage.value = ''
   try {
-    projects.value = await projectApi.listProjects(token(), filters)
+    projects.value = await projectApi.listProjects(filters)
   } catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : '项目列表加载失败'
   } finally {
@@ -122,26 +116,27 @@ async function loadProjects() {
 }
 
 async function loadUsers() {
-  users.value = await listUsers(token()).catch(() => {
+  try {
+    users.value = await getUsers()
+  } catch {
     if (session.user?.roles.includes('designer')) {
-      return [
+      users.value = [
         {
           userId: session.user.userId,
           storeId: session.user.storeId,
           username: session.user.username,
           nickname: session.user.nickname,
           phone: session.user.phone,
-          email: null,
-          status: session.user.status,
+          email: '',
+          status: 'active' as any,
           roles: session.user.roles,
-          lastLoginAt: null,
+          lastLoginAt: '',
           createdAt: '',
           updatedAt: '',
         },
       ]
     }
-    return []
-  })
+  }
 }
 
 async function submitProject() {
@@ -154,9 +149,11 @@ async function submitProject() {
   errorMessage.value = ''
   try {
     if (editingProject.value) {
-      await projectApi.updateProject(token(), editingProject.value.id, toPayload())
+      await projectApi.updateProject(editingProject.value.id, toPayload())
+      ElMessage.success('保存成功')
     } else {
-      await projectApi.createProject(token(), toPayload())
+      await projectApi.createProject(toPayload())
+      ElMessage.success('创建成功')
     }
     closeForm()
     await loadProjects()
@@ -172,11 +169,12 @@ async function archiveOrRestore(project: ProjectResponse) {
   errorMessage.value = ''
   try {
     if (project.status === 'archived') {
-      await projectApi.restoreProject(token(), project.id)
+      await projectApi.restoreProject(project.id)
     } else {
-      await projectApi.archiveProject(token(), project.id)
+      await projectApi.archiveProject(project.id)
     }
     await loadProjects()
+    ElMessage.success('操作成功')
   } catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : '项目状态更新失败'
   } finally {
@@ -204,7 +202,7 @@ onMounted(async () => {
         <h1 class="page-title">审稿项目</h1>
         <p class="page-subtitle">管理项目、客户信息、负责人和项目状态。</p>
       </div>
-      <button class="primary-button" type="button" @click="openCreateForm">创建项目</button>
+      <el-button type="primary" @click="openCreateForm">创建项目</el-button>
     </header>
 
     <div class="metric-grid">
@@ -247,7 +245,7 @@ onMounted(async () => {
             </select>
           </label>
           <div class="filter-actions">
-            <button class="secondary-button" type="button" @click="loadProjects" :disabled="loading">筛选</button>
+            <el-button type="primary" @click="loadProjects" :loading="loading">筛选</el-button>
           </div>
         </div>
 
@@ -300,50 +298,31 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div v-if="showForm" class="modal-backdrop" @click.self="closeForm">
-      <form class="modal-panel" @submit.prevent="submitProject">
-        <div class="section-header">
-          <div>
-            <h2>{{ editingProject ? '编辑项目' : '创建项目' }}</h2>
-            <p>项目负责人必须选择负责修改和跟进审稿的设计师。</p>
-          </div>
-          <button class="icon-text-button" type="button" @click="closeForm">关闭</button>
-        </div>
-
-        <div class="form-grid">
-          <label class="field">
-            <span>项目名称</span>
-            <input v-model="form.name" placeholder="例如：门头招牌设计稿" />
-          </label>
-          <label class="field">
-            <span>负责人</span>
-            <select v-model="form.ownerUserId">
-              <option value="">请选择负责人</option>
-              <option v-for="user in designerUsers" :key="user.userId" :value="String(user.userId)">
-                {{ user.nickname || user.username }}
-              </option>
-            </select>
-            <small v-if="designerUsers.length === 0" class="field-help">当前没有可选设计师，请先创建设计师账号。</small>
-          </label>
-          <label class="field">
-            <span>客户名称</span>
-            <input v-model="form.customerName" placeholder="客户或公司名称" />
-          </label>
-          <label class="field">
-            <span>客户联系方式</span>
-            <input v-model="form.customerContact" placeholder="手机号、微信或备注联系方式" />
-          </label>
-          <label class="field field-wide">
-            <span>备注</span>
-            <textarea v-model="form.remark" rows="4" placeholder="项目要求、交付说明或沟通备注" />
-          </label>
-        </div>
-
-        <div class="form-actions">
-          <button class="secondary-button" type="button" @click="closeForm">取消</button>
-          <button class="primary-button" type="submit" :disabled="saving">{{ saving ? '保存中' : '保存项目' }}</button>
-        </div>
-      </form>
-    </div>
+    <el-dialog v-model="showForm" :title="editingProject ? '编辑项目' : '创建项目'" width="500px">
+      <el-form :model="form" label-position="top">
+        <el-form-item label="项目名称" required>
+          <el-input v-model="form.name" placeholder="例如：门头招牌设计稿" />
+        </el-form-item>
+        <el-form-item label="负责人" required>
+          <el-select v-model="form.ownerUserId" style="width: 100%">
+            <el-option v-for="user in designerUsers" :key="user.userId" :label="user.nickname || user.username" :value="String(user.userId)" />
+          </el-select>
+          <small v-if="designerUsers.length === 0" class="field-help">当前没有可选设计师，请先创建设计师账号。</small>
+        </el-form-item>
+        <el-form-item label="客户名称">
+          <el-input v-model="form.customerName" placeholder="客户或公司名称" />
+        </el-form-item>
+        <el-form-item label="客户联系方式">
+          <el-input v-model="form.customerContact" placeholder="手机号、微信或备注联系方式" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="form.remark" type="textarea" :rows="4" placeholder="项目要求、交付说明或沟通备注" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="closeForm">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="submitProject">确定</el-button>
+      </template>
+    </el-dialog>
   </section>
 </template>

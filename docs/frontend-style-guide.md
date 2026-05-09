@@ -4,6 +4,8 @@
 
 审稿宝面向广告制作店、图文打印店、快印店、包装印刷店和设计工作室。前端应优先服务高频工作流：创建项目、上传设计稿、查看客户标注、上传新版本、客户确认定稿和确认留痕。
 
+前端组件库固定使用 Element Plus，并配套使用 `@element-plus/icons-vue`。后台表单、表格、弹窗、分页、上传、消息提示、标签等基础组件优先使用 Element Plus；审稿预览、标注画布等业务强定制区域可在 Element Plus 布局和反馈组件基础上自定义实现。
+
 ## 设计定位
 
 ### 总体风格
@@ -172,12 +174,20 @@ Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", 
 
 主按钮每个区域尽量只保留一个。危险操作必须有确认步骤。
 
+Element Plus 使用约定：
+
+- 主按钮使用 `type="primary"`，主题色由全局 CSS 变量覆盖为 `#2a9d8f`。
+- 危险操作使用 `type="danger"`，并配合 `ElMessageBox.confirm` 二次确认。
+- 工具按钮优先使用 `@element-plus/icons-vue` 图标，并通过 `title` 或 tooltip 说明含义。
+
 ### 表单
 
 - 标签置于输入框上方或左侧，整页保持一致。
 - 必填项使用清晰标识，但不要用大段提示文案淹没表单。
 - 错误提示放在字段下方，使用错误状态色。
 - 客户审稿页表单要短，优先收集姓名、联系方式和修改意见等必要信息。
+- 表单优先使用 `ElForm`、`ElFormItem`、`ElInput`、`ElSelect`、`ElDatePicker` 等 Element Plus 组件。
+- 表单校验规则应集中声明，避免在模板中散落复杂判断。
 
 ### 表格和列表
 
@@ -185,6 +195,8 @@ Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", 
 - 表格列顺序优先展示：项目名称、客户、负责人、状态、当前版本、更新时间、操作。
 - 状态字段使用统一状态标签。
 - 行操作保持简短，更多操作收纳到菜单中。
+- 数据表格优先使用 `ElTable` 和 `ElPagination`。
+- 小屏下如果表格不可读，可切换为列表卡片，但筛选、状态和行操作语义要保持一致。
 
 ### 状态标签
 
@@ -201,12 +213,15 @@ Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", 
 
 标签文案要短，不在标签里写完整句子。
 
+状态标签优先使用 `ElTag`。除 Element Plus 默认状态外，项目状态应按本文档状态色做轻量定制，确保“待反馈、需修改、待确认、已确认、已归档”可快速区分。
+
 ### 上传区
 
 - 上传区要明确展示支持格式、大小限制和当前上传状态。
 - 上传过程中显示进度和可取消状态。
 - 上传失败要提供失败原因和重试入口。
 - 已确认版本关联文件默认不提供删除入口。
+- 上传入口优先使用 `ElUpload`，但上传流程、鉴权头、失败重试和已确认版本保护规则由业务层控制。
 
 ### 设计稿预览与标注工具
 
@@ -282,5 +297,6 @@ Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", 
 
 - 全局基础样式放在 `frontend/src/assets/main.css`。
 - 业务组件应优先复用全局色值、间距、圆角和状态标签规则。
-- 后续如引入 CSS 变量，变量名应按语义命名，例如 `--color-primary`、`--color-border`、`--radius-base`，不要按具体颜色命名。
+- Element Plus 通过 Vite 插件按需自动导入组件和样式，主题变量在 `frontend/src/assets/main.css` 覆盖。
+- 后续如继续补充项目 CSS 变量，变量名应按语义命名，例如 `--color-primary`、`--color-border`、`--radius-base`，不要按具体颜色命名。
 - 新增页面前应先确认所属场景：后台管理页或客户公开审稿页，再选择对应布局和信息密度。
