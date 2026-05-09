@@ -25,9 +25,9 @@
 | M03 设计稿版本 | 已完成 | 版本上传、递增管理及前端预览切换功能已全部完成 |
 | M04 文件上传、存储与预览 | 已完成 | 已集成 MinIO 存储，完成文件元数据持久化及受控预览 URL 生成功能 |
 | M05 客户审稿链接 | 已完成 | 审稿链接生成、哈希存储及管理（禁用/恢复/删除）后端接口已全部完成 |
-| M06 在线标注评论 | 已完成 | 客户提交标注、设计师查看处理标注及其回复功能的后端接口已全部完成 |
-| M07 客户确认定稿 | 已完成 | 客户确认定稿幂等接口、项目状态自动变更及确认记录持久化后端已全部完成 |
-| M08 审稿行为与确认记录 | 已完成 | 通用审计日志写入服务、项目全生命周期时间线查询后端已全部完成 |
+| M06 在线标注评论 | 已完成 | 客户提交标注、设计师查看处理标注、预览图定位展示及状态处理前后端已全部完成 |
+| M07 客户确认定稿 | 已完成 | 客户确认定稿幂等接口、项目状态自动变更、确认记录持久化及前端确认入口已全部完成 |
+| M08 审稿行为与确认记录 | 已完成 | 通用审计日志写入服务、项目全生命周期时间线查询后端及项目详情时间线展示已全部完成 |
 | M09 后台工作台与状态看板 | 未开始 | 暂无业务实现 |
 | M10 通知与提醒 | 未开始 | 已有数据设计，暂无业务实现 |
 | M11 系统配置与基础数据 | 未开始 | 已有数据设计，暂无业务实现 |
@@ -259,11 +259,13 @@
 - 标注回复逻辑：`AnnotationCommentEntity` 及对应 Mapper。
 - 状态联动：提交标注后，项目状态自动变更为 `change_requested`。
 - 审计日志：提交和处理标注均自动记录到 `audit_log`。
+- 前端 API 封装：`frontend/src/api/annotations.ts`。
+- 客户审稿页：`frontend/src/views/public/review/ReviewView.vue` 支持图片点击点位标注、填写意见并提交。
+- 管理端项目详情页：`frontend/src/views/admin/projects/ProjectDetailView.vue` 支持按当前版本加载标注、在预览图上定位展示，并将标注标记为已处理或忽略。
 
 未完成：
 
 - 标注回复的 Controller 接口（MVP 暂通过 resolve 接口覆盖核心流转）。
-- 前端交互界面。
 
 ## M07 客户确认定稿
 
@@ -281,10 +283,13 @@
 - 业务校验：防止重复确认，防止对归档项目确认。
 - 状态流转：确认成功后，项目状态变更为 `confirmed`，版本标记为 `is_confirmed`。
 - 留痕记录：记录确认人的 IP、User-Agent、时间及来源链接。
+- 前端 API 封装：`frontend/src/api/confirmations.ts`。
+- 客户审稿页确认入口：`frontend/src/views/public/review/ReviewView.vue`。
+- 管理端项目详情页确认记录区：`frontend/src/views/admin/projects/ProjectDetailView.vue`。
 
 未完成：
 
-- 前端客户确认弹窗。
+- 确认单导出。
 
 ## M08 审稿行为与确认记录
 
@@ -301,10 +306,11 @@
 - 项目时间线查询接口：`GET /api/admin/projects/{projectId}/timeline`。
 - 自动埋点：项目创建、上传版本、提交标注、处理标注、客户确认等动作均已接入自动日志记录。
 - 数据模型：`AuditLogEntity`、`AuditLogMapper`。
+- 前端 API 封装：`frontend/src/api/audit.ts`。
+- 管理端项目详情页时间线展示：`frontend/src/views/admin/projects/ProjectDetailView.vue`。
 
 未完成：
 
-- 前端时间线展示组件。
 - 确认单导出。
 
 ## M09 后台工作台与状态看板

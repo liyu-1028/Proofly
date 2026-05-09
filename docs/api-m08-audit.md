@@ -23,9 +23,19 @@
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `id` | number | 日志 ID |
+| `id` | string | 日志 ID |
+| `storeId` | string | 门店 ID |
 | `action` | string | 动作类型 (如 CREATE, SUBMIT_ANNOTATION, CONFIRM_PROJECT) |
+| `targetType` | string | 目标类型 |
+| `targetId` | string | 目标 ID |
 | `operatorType` | string | 操作人类型：`user`, `customer`, `system` |
+| `operatorId` | string | 操作人 ID |
 | `operatorName` | string | 操作人名称 |
 | `summary` | string | 日志描述文本 |
+| `extraJson` | string | 扩展信息 JSON |
 | `createdAt` | string | 发生时间 |
+
+## 前端接入
+
+- API 封装：`frontend/src/api/audit.ts`。
+- 管理端入口：`frontend/src/views/admin/projects/ProjectDetailView.vue`，项目详情页调用 `GET /api/admin/projects/{projectId}/timeline` 展示项目动态时间线。

@@ -46,7 +46,7 @@
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `id` | number | 标注 ID |
+| `id` | string | 标注 ID |
 | `type` | string | 标注类型 |
 | `xRatio` | number | X 相对比例 |
 | `yRatio` | number | Y 相对比例 |
@@ -56,6 +56,8 @@
 | `customerName` | string | 客户名称 |
 | `status` | string | 状态：`open`, `resolved`, `ignored` |
 | `createdAt` | string | 创建时间 |
+| `resolvedByNickname` | string | 处理人昵称 |
+| `resolvedAt` | string | 处理时间 |
 
 ## PATCH `/api/admin/projects/{projectId}/versions/{versionId}/annotations/{annotationId}/status`
 
@@ -68,3 +70,9 @@
 | `status` | string | 是 | 目标状态：`resolved` 或 `ignored` |
 
 响应数据：`null`。
+
+## 前端接入
+
+- API 封装：`frontend/src/api/annotations.ts`。
+- 客户端入口：`frontend/src/views/public/review/ReviewView.vue`，使用 `POST /api/public/reviews/{token}/annotations` 提交点位标注。
+- 管理端入口：`frontend/src/views/admin/projects/ProjectDetailView.vue`，使用 `GET /api/admin/projects/{projectId}/versions/{versionId}/annotations` 按当前版本加载标注，并使用 `PATCH .../status` 处理标注状态。

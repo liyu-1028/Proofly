@@ -40,7 +40,13 @@
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `id` | number | 记录 ID |
-| `versionId` | number | 被确认的版本 ID |
+| `id` | string | 记录 ID |
+| `versionId` | string | 被确认的版本 ID |
 | `customerName` | string | 确认人 |
 | `confirmedAt` | string | 确认时间 |
+
+## 前端接入
+
+- API 封装：`frontend/src/api/confirmations.ts`。
+- 客户端入口：`frontend/src/views/public/review/ReviewView.vue`，客户填写确认人和联系方式后调用 `POST /api/public/reviews/{token}/confirmations`。
+- 管理端入口：`frontend/src/views/admin/projects/ProjectDetailView.vue`，调用 `GET /api/admin/projects/{projectId}/confirmation` 展示确认人、确认时间和确认版本。
