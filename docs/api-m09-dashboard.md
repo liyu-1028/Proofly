@@ -29,6 +29,12 @@
 | `recentProjects` | array | 最近更新的 5 个项目列表，结构同 `ProjectResponse` |
 | `recentActivities` | array | 最近的 10 条操作日志列表 |
 
+## 前端接入
+
+- API 封装：`frontend/src/api/dashboard.ts`。
+- 页面入口：`frontend/src/views/admin/dashboard/DashboardView.vue`。
+- 页面展示：顶部待办摘要、关键指标卡片、优先处理项目、状态分布、最近项目和近期动态时间线均来自 `GET /api/admin/dashboard/stats` 响应数据。
+
 `AuditLogResponse` 字段 (用于 `recentActivities`)：
 
 | 字段 | 类型 | 说明 |

@@ -71,15 +71,11 @@ button:disabled {
   min-height: 48px;
 }
 
-.brand-mark {
-  display: grid;
+.brand-logo {
   width: 40px;
   height: 40px;
-  place-items: center;
   border-radius: 8px;
-  background: #2a9d8f;
-  color: #ffffff;
-  font-weight: 800;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 16%);
 }
 
 .brand strong,

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import { useRoute, useRouter } from 'vue-router'
 
+import prooflyLogo from '@/assets/proofly-logo.svg'
 import { useSessionStore } from '@/stores/session'
 
 const route = useRoute()
@@ -23,7 +24,7 @@ async function handleLogout() {
   <div v-else class="app-shell">
     <aside class="sidebar">
       <div class="brand">
-        <span class="brand-mark">审</span>
+        <img class="brand-logo" :src="prooflyLogo" alt="审稿宝 Logo" />
         <div>
           <strong>审稿宝</strong>
           <span>Proofly</span>

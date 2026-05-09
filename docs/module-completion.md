@@ -324,7 +324,7 @@
 已完成：
 
 - 工作台统计接口：`GET /api/admin/dashboard/stats`，包含状态计数、最近项目和审计日志。
-- 前端工作台页面：`frontend/src/views/admin/dashboard/DashboardView.vue`，展示关键指标、最近项目列表和近期动态。
+- 前端工作台页面：`frontend/src/views/admin/dashboard/DashboardView.vue`，展示关键指标、待办摘要、状态分布、最近项目列表和近期动态。
 - 前端统计接口封装：`frontend/src/api/dashboard.ts`。
 - 后端统计服务：`DashboardService`，高效聚合门店数据。
 
@@ -336,7 +336,7 @@
 交接说明：
 
 - 工作台数据实时从 MySQL 聚合，暂未引入 Redis 缓存。
-- 最近项目显示最近更新的前 5 个项目。
+- 最近项目显示最近更新的前 5 个项目，并在工作台中按状态提取高优先级待办。
 - 近期动态显示最近产生的 10 条审计日志。
 
 完成判定：
