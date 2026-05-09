@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.lyllink.proofly.common.BusinessException;
 import com.lyllink.proofly.dao.ProjectMapper;
 import com.lyllink.proofly.dao.ProjectStatusLogMapper;
+import com.lyllink.proofly.dao.RoleMapper;
 import com.lyllink.proofly.dao.UserMapper;
 import com.lyllink.proofly.dto.req.ProjectCreateRequest;
 import com.lyllink.proofly.dto.req.ProjectUpdateRequest;
@@ -35,15 +36,18 @@ public class ProjectService {
     private final ProjectMapper projectMapper;
     private final ProjectStatusLogMapper projectStatusLogMapper;
     private final UserMapper userMapper;
+    private final RoleMapper roleMapper;
 
     public ProjectService(
             ProjectMapper projectMapper,
             ProjectStatusLogMapper projectStatusLogMapper,
-            UserMapper userMapper
+            UserMapper userMapper,
+            RoleMapper roleMapper
     ) {
         this.projectMapper = projectMapper;
         this.projectStatusLogMapper = projectStatusLogMapper;
         this.userMapper = userMapper;
+        this.roleMapper = roleMapper;
     }
 
     public List<ProjectResponse> list(CurrentUser currentUser, String keyword, String status, Long ownerUserId) {
@@ -88,8 +92,7 @@ public class ProjectService {
 
     @Transactional
     public ProjectResponse create(CurrentUser currentUser, ProjectCreateRequest request) {
-        // Ensure owner exists in the same store
-        ensureUserInStore(currentUser.storeId(), request.getOwnerUserId());
+        ensureDesignerInStore(currentUser.storeId(), request.getOwnerUserId());
 
         ProjectEntity project = new ProjectEntity();
         project.setId(IdWorker.getId());
@@ -132,7 +135,7 @@ public class ProjectService {
             throw BusinessException.badRequest("已归档的项目不能编辑");
         }
 
-        ensureUserInStore(currentUser.storeId(), request.getOwnerUserId());
+        ensureDesignerInStore(currentUser.storeId(), request.getOwnerUserId());
 
         project.setName(request.getName().trim());
         project.setCustomerName(trimToNull(request.getCustomerName()));
@@ -202,15 +205,20 @@ public class ProjectService {
         return project;
     }
 
-    private void ensureUserInStore(Long storeId, Long userId) {
+    private void ensureDesignerInStore(Long storeId, Long userId) {
         UserEntity user = userMapper.selectOne(new LambdaQueryWrapper<UserEntity>()
                 .eq(UserEntity::getStoreId, storeId)
                 .eq(UserEntity::getId, userId)
                 .eq(UserEntity::getDeleted, false)
+                .eq(UserEntity::getStatus, "active")
                 .select(UserEntity::getId)
                 .last("LIMIT 1"));
         if (user == null) {
-            throw BusinessException.badRequest("负责人不存在或不属于该门店");
+            throw BusinessException.badRequest("负责人不存在、不属于该门店或已停用");
+        }
+        List<String> roles = roleMapper.selectRoleCodesByUserId(storeId, userId);
+        if (!roles.contains("designer")) {
+            throw BusinessException.badRequest("项目负责人必须是设计师");
         }
     }
 

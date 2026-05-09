@@ -58,6 +58,8 @@ const metrics = computed(() => ({
   confirmed: projects.value.filter((project) => project.status === 'confirmed').length,
 }))
 
+const designerUsers = computed(() => users.value.filter((user) => user.roles.includes('designer')))
+
 function token() {
   if (!session.accessToken) {
     throw new Error('缺少访问令牌')
@@ -69,7 +71,7 @@ function resetForm() {
   form.name = ''
   form.customerName = ''
   form.customerContact = ''
-  form.ownerUserId = session.user?.userId ? String(session.user.userId) : ''
+  form.ownerUserId = session.user?.roles.includes('designer') && session.user.userId ? String(session.user.userId) : ''
   form.remark = ''
 }
 
@@ -121,7 +123,7 @@ async function loadProjects() {
 
 async function loadUsers() {
   users.value = await listUsers(token()).catch(() => {
-    if (session.user) {
+    if (session.user?.roles.includes('designer')) {
       return [
         {
           userId: session.user.userId,
@@ -241,7 +243,7 @@ onMounted(async () => {
             <span>负责人</span>
             <select v-model="filters.ownerUserId">
               <option value="">全部负责人</option>
-              <option v-for="user in users" :key="user.userId" :value="user.userId">{{ user.nickname || user.username }}</option>
+              <option v-for="user in designerUsers" :key="user.userId" :value="user.userId">{{ user.nickname || user.username }}</option>
             </select>
           </label>
           <div class="filter-actions">
@@ -303,7 +305,7 @@ onMounted(async () => {
         <div class="section-header">
           <div>
             <h2>{{ editingProject ? '编辑项目' : '创建项目' }}</h2>
-            <p>项目负责人通常是负责修改和跟进审稿的设计师。</p>
+            <p>项目负责人必须选择负责修改和跟进审稿的设计师。</p>
           </div>
           <button class="icon-text-button" type="button" @click="closeForm">关闭</button>
         </div>
@@ -317,10 +319,11 @@ onMounted(async () => {
             <span>负责人</span>
             <select v-model="form.ownerUserId">
               <option value="">请选择负责人</option>
-              <option v-for="user in users" :key="user.userId" :value="String(user.userId)">
+              <option v-for="user in designerUsers" :key="user.userId" :value="String(user.userId)">
                 {{ user.nickname || user.username }}
               </option>
             </select>
+            <small v-if="designerUsers.length === 0" class="field-help">当前没有可选设计师，请先创建设计师账号。</small>
           </label>
           <label class="field">
             <span>客户名称</span>

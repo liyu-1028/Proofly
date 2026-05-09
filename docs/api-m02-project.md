@@ -31,7 +31,7 @@
 | --- | --- | --- | --- |
 | `keyword` | string | 否 | 按项目名称、客户名称模糊搜索 |
 | `status` | string | 否 | 按项目状态筛选 |
-| `ownerUserId` | number | 否 | 按负责人 ID 筛选 |
+| `ownerUserId` | number | 否 | 按项目负责设计师 ID 筛选 |
 
 响应数据：`ProjectResponse[]`。
 
@@ -44,7 +44,7 @@
 | `name` | string | 项目名称 |
 | `customerName` | string | 客户名称 |
 | `customerContact` | string | 客户联系方式 |
-| `ownerUserId` | number | 项目负责人 ID |
+| `ownerUserId` | number | 项目负责设计师 ID |
 | `ownerNickname` | string | 项目负责人昵称 |
 | `status` | string | 项目状态：`draft`, `waiting_feedback`, `change_requested`, `waiting_confirm`, `confirmed`, `archived` |
 | `currentVersionId` | number | 当前展示版本 ID |
@@ -66,7 +66,7 @@
 | `name` | string | 是 | 项目名称 |
 | `customerName` | string | 否 | 客户名称 |
 | `customerContact` | string | 否 | 客户联系方式 |
-| `ownerUserId` | number | 是 | 项目负责人 ID |
+| `ownerUserId` | number | 是 | 项目负责设计师 ID，必须是当前门店下状态为 `active` 且拥有 `designer` 角色的用户 |
 | `remark` | string | 否 | 备注 |
 
 响应数据：`ProjectResponse`。
@@ -113,6 +113,6 @@ M02 前端已接入本模块接口：
 前端实现说明：
 
 - 项目列表支持关键字、状态、负责人筛选。
-- 创建和编辑项目时，`ownerUserId` 表示项目负责人，通常是负责跟进审稿的设计师。
+- 创建和编辑项目时，`ownerUserId` 表示项目负责设计师的 `userId`，不是门店老板 ID。
 - 归档项目不能在列表和详情页继续编辑，只能恢复后编辑。
 - 当前版本、确认版本、标注数量等能力将在后续 M03-M08 模块接入。

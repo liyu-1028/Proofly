@@ -29,6 +29,7 @@ const errorMessage = ref('')
 const editMode = ref(false)
 
 const projectId = computed(() => Number(route.params.projectId))
+const designerUsers = computed(() => users.value.filter((user) => user.roles.includes('designer')))
 
 const form = reactive({
   name: '',
@@ -190,10 +191,11 @@ onMounted(() => {
                 <span>负责人</span>
                 <select v-model="form.ownerUserId">
                   <option value="">请选择负责人</option>
-                  <option v-for="user in users" :key="user.userId" :value="String(user.userId)">
+                  <option v-for="user in designerUsers" :key="user.userId" :value="String(user.userId)">
                     {{ user.nickname || user.username }}
                   </option>
                 </select>
+                <small v-if="designerUsers.length === 0" class="field-help">当前没有可选设计师，请先创建设计师账号。</small>
               </label>
               <label class="field">
                 <span>客户名称</span>

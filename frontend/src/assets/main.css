@@ -210,6 +210,12 @@ button:disabled {
   font-weight: 700;
 }
 
+.field-help {
+  color: #64727f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .field input,
 .field select,
 .field textarea {
