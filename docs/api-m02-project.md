@@ -96,3 +96,23 @@
 用途：恢复已归档项目，状态将根据是否已确认版本回退。
 
 响应数据：`ProjectResponse`。
+
+## 前端调用位置
+
+M02 前端已接入本模块接口：
+
+| 前端文件 | 说明 |
+| --- | --- |
+| `frontend/src/api/projects.ts` | M02 项目接口封装 |
+| `frontend/src/api/users.ts` | 获取负责人下拉选项 |
+| `frontend/src/types/project.ts` | 项目状态、响应和请求类型 |
+| `frontend/src/views/admin/projects/ProjectsView.vue` | 项目列表、筛选、创建、编辑、归档和恢复 |
+| `frontend/src/views/admin/projects/ProjectDetailView.vue` | 项目详情、编辑、归档和恢复 |
+| `frontend/src/router/index.ts` | `/admin/projects` 和 `/admin/projects/:projectId` 路由 |
+
+前端实现说明：
+
+- 项目列表支持关键字、状态、负责人筛选。
+- 创建和编辑项目时，`ownerUserId` 表示项目负责人，通常是负责跟进审稿的设计师。
+- 归档项目不能在列表和详情页继续编辑，只能恢复后编辑。
+- 当前版本、确认版本、标注数量等能力将在后续 M03-M08 模块接入。

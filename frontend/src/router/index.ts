@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import DashboardView from '@/views/admin/dashboard/DashboardView.vue'
 import LoginView from '@/views/auth/LoginView.vue'
+import ProjectDetailView from '@/views/admin/projects/ProjectDetailView.vue'
 import ProjectsView from '@/views/admin/projects/ProjectsView.vue'
 import SettingsView from '@/views/admin/settings/SettingsView.vue'
 import StaffView from '@/views/admin/staff/StaffView.vue'
@@ -35,6 +36,14 @@ const router = createRouter({
       path: '/admin/projects',
       name: 'projects',
       component: ProjectsView,
+      meta: {
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/admin/projects/:projectId',
+      name: 'project-detail',
+      component: ProjectDetailView,
       meta: {
         requiresAuth: true,
       },

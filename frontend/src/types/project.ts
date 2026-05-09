@@ -6,11 +6,34 @@ export type ProjectStatus =
   | 'confirmed'
   | 'archived'
 
-export interface ProjectSummary {
-  id: string
+export interface ProjectResponse {
+  id: number
+  storeId: number
   name: string
-  customerName: string
+  customerName: string | null
+  customerContact: string | null
+  ownerUserId: number
+  ownerNickname: string | null
   status: ProjectStatus
-  ownerName: string
+  currentVersionId: number | null
+  confirmedVersionId: number | null
+  remark: string | null
+  archivedAt: string | null
+  createdAt: string
+  createdByNickname: string | null
   updatedAt: string
+}
+
+export interface ProjectPayload {
+  name: string
+  customerName?: string
+  customerContact?: string
+  ownerUserId: number
+  remark?: string
+}
+
+export interface ProjectListQuery {
+  keyword?: string
+  status?: ProjectStatus | ''
+  ownerUserId?: number | ''
 }
