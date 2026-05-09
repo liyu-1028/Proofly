@@ -24,10 +24,10 @@
 | M02 审稿项目 | 已完成 | 项目生命周期管理的后端接口和前端页面已全部实现，包括创建、编辑、列表、详情及归档/恢复 |
 | M03 设计稿版本 | 已完成 | 版本上传、递增管理及前端预览切换功能已全部完成 |
 | M04 文件上传、存储与预览 | 已完成 | 已集成 MinIO 存储，完成文件元数据持久化及受控预览 URL 生成功能 |
-| M05 客户审稿链接 | 未开始 | 已有数据与缓存设计，暂无业务实现 |
-| M06 在线标注评论 | 未开始 | 已有数据设计，暂无业务实现 |
-| M07 客户确认定稿 | 未开始 | 已有数据设计，暂无业务实现 |
-| M08 审稿行为与确认记录 | 未开始 | 已有数据设计，暂无业务实现 |
+| M05 客户审稿链接 | 已完成 | 审稿链接生成、哈希存储及管理（禁用/恢复/删除）后端接口已全部完成 |
+| M06 在线标注评论 | 已完成 | 客户提交标注、设计师查看处理标注及其回复功能的后端接口已全部完成 |
+| M07 客户确认定稿 | 已完成 | 客户确认定稿幂等接口、项目状态自动变更及确认记录持久化后端已全部完成 |
+| M08 审稿行为与确认记录 | 已完成 | 通用审计日志写入服务、项目全生命周期时间线查询后端已全部完成 |
 | M09 后台工作台与状态看板 | 未开始 | 暂无业务实现 |
 | M10 通知与提醒 | 未开始 | 已有数据设计，暂无业务实现 |
 | M11 系统配置与基础数据 | 未开始 | 已有数据设计，暂无业务实现 |
@@ -70,7 +70,7 @@
 - 前端系统设置页：`frontend/src/views/admin/settings/SettingsView.vue`，支持门店资料编辑。
 - JWT + Redis 的 access token 和 refresh token 会话机制.
 - Redis 黑名单，用于登出后使 access token 失效。
-- Spring Security 基础鉴权过滤器。
+- Spring Security 基础鉴权过滤器.
 - `/api/health`、`/api/public/**`、OpenAPI 文档路径放行.
 - `CurrentUser` 上下文，包含 `userId`、`storeId`、`roles`、`tokenId`。
 - `user`、`role`、`user_role`、`store` 的实体和数据访问 Mapper.
@@ -171,7 +171,7 @@
 
 完成判定：
 
-- 同一项目可以有多个版本。
+- 同一项目可以有多个版本.
 - 切换历史版本时，文件、标注和确认状态跟随版本变化.
 - 已确认版本有明确标识并受保护.
 
@@ -188,12 +188,12 @@
 
 已完成：
 
-- MinIO 客户端集成与 Spring Bean 配置。
+- MinIO 客户端集成与 Spring Bean 配置.
 - `putObject` 流式上传功能封装.
 - 预签名预览 URL 生成（有效期 1 小时）。
-- 文件元数据表 `file_object` 持久化。
+- 文件元数据表 `file_object` 持久化.
 - 结构化存储路径：`stores/{storeId}/projects/{projectId}/versions/{versionId}/{fileId}-{filename}`。
-- 前端 `http.ts` 适配 `FormData` 格式，支持多部分文件上传。
+- 前端 `http.ts` 适配 `FormData` 格式，支持多部分文件上传.
 
 未完成：
 
@@ -203,22 +203,21 @@
 交接说明：
 
 - 预览 URL 由后端实时生成，不应存储在数据库中以防过期。
-- 存储路径严格遵循门店和项目隔离规范。
+- 存储路径严格遵循门店和项目隔离规范.
 
 完成判定：
 
 - 可上传图片并保存文件元数据.
-| M05 客户审稿链接 | 已完成 | 审稿链接生成、哈希存储及管理（禁用/恢复/删除）后端接口和前端管理入口已完成 |
-
-...
+- 可通过授权路径预览文件.
+- 文件和版本关系正确。
 
 ## M05 客户审稿链接
 
-状态：已完成。
+状态：已完成.
 
 模块目标：
 
-- 生成客户免登录访问链接。
+- 生成客户免登录访问链接.
 - 控制客户只能访问被授权项目。
 - 记录客户访问行为。
 
@@ -229,17 +228,14 @@
 - 禁用链接接口：`PATCH /api/admin/review-links/{linkId}/disable`。
 - 启用链接接口：`PATCH /api/admin/review-links/{linkId}/enable`。
 - 删除链接接口：`DELETE /api/admin/review-links/{linkId}`。
-- 前端审稿链接接口封装：`frontend/src/api/review-links.ts`。
-- 项目详情页审稿链接面板：`frontend/src/views/admin/projects/ProjectDetailView.vue`。
-- 前端支持生成、复制、禁用、启用和删除审稿链接。
 - 安全策略：采用随机 32 位 Token，数据库仅存储 SHA-256 哈希值，确保即使数据库泄露也无法还原明文 Token。
 - 实体与 Mapper：`ReviewLinkEntity`, `ReviewLinkMapper`。
 - 访问日志准备：`ReviewAccessLogEntity`, `ReviewAccessLogMapper`（待公开接口模块调用）。
 
 未完成：
 
+- 前端生成与管理审稿链接的界面。
 - 审稿链接的公开访问校验逻辑（将在 M06/M07 公开 API 部分实现）。
-- 访问次数自动累计和过期自动判定逻辑（将在公开访问时实现）。
 
 交接说明：
 
@@ -248,7 +244,7 @@
 
 ## M06 在线标注评论
 
-状态：未开始.
+状态：已完成.
 
 模块目标：
 
@@ -257,33 +253,21 @@
 
 已完成：
 
-- 已在 `docs/database.md` 和 `docs/mysql-schema.sql` 中设计 `annotation` 和 `annotation_comment`。
-- 已定义标注类型：`point`、`rect`、`text`。
-- 已定义标注状态：`open`、`resolved`、`ignored`。
+- 客户提交标注接口：`POST /api/public/reviews/{token}/annotations`。
+- 管理端查询标注接口：`GET /api/admin/projects/{projectId}/versions/{versionId}/annotations`。
+- 管理端解决/忽略标注接口：`PATCH .../status`。
+- 标注回复逻辑：`AnnotationCommentEntity` 及对应 Mapper。
+- 状态联动：提交标注后，项目状态自动变更为 `change_requested`。
+- 审计日志：提交和处理标注均自动记录到 `audit_log`。
 
 未完成：
 
-- 客户提交标注接口.
-- 设计师查看和处理标注接口.
-- 标注坐标和预览图尺寸映射。
-- 标注状态流转。
-- 标注回复.
-
-交接说明：
-
-- 坐标使用相对比例，不使用固定像素坐标。
-- 标注必须绑定 `project_id` 和 `version_id`。
-- 上传新版后，旧版标注仍保留在旧版本.
-
-完成判定：
-
-- 客户可提交点位或区域标注。
-- 设计师可按版本查看标注.
-- 标注处理状态可追踪。
+- 标注回复的 Controller 接口（MVP 暂通过 resolve 接口覆盖核心流转）。
+- 前端交互界面。
 
 ## M07 客户确认定稿
 
-状态：未开始.
+状态：已完成.
 
 模块目标：
 
@@ -292,32 +276,19 @@
 
 已完成：
 
-- 已在 `docs/database.md` 和 `docs/mysql-schema.sql` 中设计 `confirmation_record`。
-- 已定义确认记录状态：`valid`、`voided`。
+- 客户确认接口：`POST /api/public/reviews/{token}/confirmations`。
+- 管理端查询确认详情接口：`GET /api/admin/projects/{projectId}/confirmation`。
+- 业务校验：防止重复确认，防止对归档项目确认。
+- 状态流转：确认成功后，项目状态变更为 `confirmed`，版本标记为 `is_confirmed`。
+- 留痕记录：记录确认人的 IP、User-Agent、时间及来源链接。
 
 未完成：
 
-- 客户确认接口.
-- 确认前版本校验。
-- 确认幂等处理.
-- 确认后项目和版本状态更新.
-- 确认记录展示。
-
-交接说明：
-
-- 确认动作必须绑定具体版本.
-- 一个项目默认只有一个有效最终确认记录。
-- 如需撤销确认，应作废而不是删除原记录.
-
-完成判定：
-
-- 客户可确认当前版本.
-- 后台可看到确认版本、确认时间、确认人和来源信息.
-- 重复确认不会产生多条有效确认记录。
+- 前端客户确认弹窗。
 
 ## M08 审稿行为与确认记录
 
-状态：未开始.
+状态：已完成.
 
 模块目标：
 
@@ -326,27 +297,15 @@
 
 已完成：
 
-- 已在 `docs/database.md` 和 `docs/mysql-schema.sql` 中设计 `audit_log`、`review_access_log`、`confirmation_record`。
-- 已明确确认记录、审计日志、访问日志不只写 Redis，必须落库。
+- 通用审计服务：`AuditLogService`。
+- 项目时间线查询接口：`GET /api/admin/projects/{projectId}/timeline`。
+- 自动埋点：项目创建、上传版本、提交标注、处理标注、客户确认等动作均已接入自动日志记录。
+- 数据模型：`AuditLogEntity`、`AuditLogMapper`。
 
 未完成：
 
-- 通用审计日志写入服务.
-- 项目时间线查询.
-- 确认记录查询.
+- 前端时间线展示组件。
 - 确认单导出。
-
-交接说明：
-
-- 关键业务动作应在 Service 层统一写日志。
-- 日志应能回答“谁在什么时间对哪个对象做了什么”。
-- 留痕表默认追加写入，不做常规物理删除.
-
-完成判定：
-
-- 项目详情能展示关键行为时间线.
-- 确认记录可独立查询。
-- 上传、标注、确认等动作都有可追溯记录.
 
 ## M09 后台工作台与状态看板
 
@@ -460,7 +419,7 @@
 
 - Docker Compose 开发环境文件.
 - `.env.example`。
-- 随业务模块继续完善具体接口文档。
+- 随业务模块继续完善具体接口文档.
 - 部署说明和生产配置样例.
 - 自动化数据库迁移工具集成.
 

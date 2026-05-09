@@ -51,10 +51,14 @@ public class ProjectVersionService {
      * List all versions for a project.
      */
     public List<ProjectVersionResponse> listVersions(CurrentUser currentUser, Long projectId) {
-        ensureProjectExists(currentUser.storeId(), projectId);
+        return listVersionsInternal(currentUser.storeId(), projectId);
+    }
+
+    public List<ProjectVersionResponse> listVersionsInternal(Long storeId, Long projectId) {
+        ensureProjectExists(storeId, projectId);
 
         List<ProjectVersionEntity> versions = projectVersionMapper.selectList(new LambdaQueryWrapper<ProjectVersionEntity>()
-                .eq(ProjectVersionEntity::getStoreId, currentUser.storeId())
+                .eq(ProjectVersionEntity::getStoreId, storeId)
                 .eq(ProjectVersionEntity::getProjectId, projectId)
                 .eq(ProjectVersionEntity::getDeleted, false)
                 .orderByDesc(ProjectVersionEntity::getVersionNo));
