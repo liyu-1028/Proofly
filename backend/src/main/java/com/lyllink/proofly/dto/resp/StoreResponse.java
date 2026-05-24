@@ -9,6 +9,9 @@ public record StoreResponse(
         String contactPhone,
         String status,
         String deploymentMode,
+        String planType,
+        LocalDateTime planExpiresAt,
+        String inviteCode,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

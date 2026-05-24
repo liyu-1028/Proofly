@@ -38,17 +38,20 @@ public class ProjectService {
     private final ProjectStatusLogMapper projectStatusLogMapper;
     private final UserMapper userMapper;
     private final RoleMapper roleMapper;
+    private final UsageService usageService;
 
     public ProjectService(
             ProjectMapper projectMapper,
             ProjectStatusLogMapper projectStatusLogMapper,
             UserMapper userMapper,
-            RoleMapper roleMapper
+            RoleMapper roleMapper,
+            UsageService usageService
     ) {
         this.projectMapper = projectMapper;
         this.projectStatusLogMapper = projectStatusLogMapper;
         this.userMapper = userMapper;
         this.roleMapper = roleMapper;
+        this.usageService = usageService;
     }
 
     public List<ProjectResponse> list(CurrentUser currentUser, String keyword, String status, Long ownerUserId) {
@@ -94,6 +97,7 @@ public class ProjectService {
 
     @Transactional
     public ProjectResponse create(CurrentUser currentUser, ProjectCreateRequest request) {
+        usageService.checkProjectLimit(currentUser.storeId());
         ensureDesignerInStore(currentUser.storeId(), request.getOwnerUserId());
 
         ProjectEntity project = new ProjectEntity();

@@ -18,6 +18,9 @@ public class StoreEntity {
     private String contactPhone;
     private String status;
     private String deploymentMode;
+    private String planType;
+    private LocalDateTime planExpiresAt;
+    private String inviteCode;
     private LocalDateTime createdAt;
     private Long createdBy;
     private LocalDateTime updatedAt;

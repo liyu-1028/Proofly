@@ -1,14 +1,13 @@
 # 审稿宝数据存储设计
 
-本文档设计审稿宝 MVP 阶段需要的 MySQL 数据库结构、Redis 必要缓存键，以及 MinIO 对象文件路径命名。
+本文档设计审稿宝 MVP 阶段及商业化改造需要的 MySQL 数据库结构、Redis 必要缓存键，以及 MinIO 对象文件路径命名。
 
 设计目标：
 
 - 支撑“创建项目 → 上传版本 → 客户审稿 → 在线标注 → 上传新版 → 客户确认 → 留痕”的主流程。
-- 从第一版开始保留 `store_id`，兼容单店私有部署和后续多门店平台化部署。
-- 设计稿版本不可覆盖，确认记录、访问日志、审计日志不可随意物理删除。
-- Redis 只保存会话、热点摘要、短期状态和轻量控制数据，不保存最终业务事实。
-- MinIO 对象 key 从第一版开始包含门店、项目、版本维度。
+- 支持 SaaS 多租户模式，通过 `store_id` 进行资源隔离。
+- 建立权益网关（Entitlement Gateway），支持套餐用量控制。
+- 对接支付系统（XPay）与推荐机制。
 
 ## 通用约定
 
@@ -20,7 +19,6 @@
 - 主键类型：`BIGINT`，由雪花 ID 或等价全局 ID 生成。
 - 时间字段：`DATETIME(3)`。
 - 状态字段：`VARCHAR(32)`。
-- 金额、用量等后续字段不在 MVP 表中提前设计。
 - 公开访问 token 不使用连续 ID，不直接暴露数据库主键。
 
 ### 通用字段
@@ -57,7 +55,7 @@
 
 ### `store`
 
-门店信息表。
+门店（租户）信息表。
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
@@ -67,6 +65,9 @@
 | `contact_phone` | `VARCHAR(30)` | 否 | 联系电话 |
 | `status` | `VARCHAR(32)` | 是 | 门店状态 |
 | `deployment_mode` | `VARCHAR(32)` | 是 | 部署模式 |
+| `plan_type` | `VARCHAR(32)` | 是 | 套餐类型：`free`, `pro` |
+| `plan_expires_at` | `DATETIME(3)` | 否 | 套餐过期时间 |
+| `invite_code` | `VARCHAR(32)` | 否 | 门店专属邀请码 |
 | `created_at` | `DATETIME(3)` | 是 | 创建时间 |
 | `created_by` | `BIGINT` | 否 | 创建人 |
 | `updated_at` | `DATETIME(3)` | 是 | 更新时间 |
@@ -92,6 +93,7 @@
 | 索引 | 字段 | 说明 |
 | --- | --- | --- |
 | `idx_store_status` | `status` | 按状态筛选 |
+| `uk_store_invite_code` | `invite_code` | 邀请码唯一 |
 
 ### `user`
 
@@ -127,7 +129,7 @@
 | 索引 | 字段 | 说明 |
 | --- | --- | --- |
 | `uk_user_store_username` | `store_id, username, deleted` | 同门店用户名唯一 |
-| `uk_user_store_phone` | `store_id, phone, deleted` | 同门店手机号唯一，手机号为空时由业务处理 |
+| `uk_user_store_phone` | `store_id, phone, deleted` | 同门店手机号唯一 |
 | `idx_user_store_status` | `store_id, status` | 员工列表筛选 |
 
 ### `role`
@@ -390,7 +392,7 @@
 
 ### `annotation`
 
-标注意见表。标注必须绑定具体项目和具体版本。
+标注意见表。标注必须绑定具体项目 and 具体版本。
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
@@ -593,6 +595,7 @@
 | `upload.max-file-size-mb` | `100` | 最大上传文件大小 |
 | `upload.allowed-exts` | `jpg,jpeg,png,webp,pdf,ai,psd,cdr` | 允许上传扩展名 |
 | `review-link.default-ttl-days` | `30` | 审稿链接默认有效期 |
+| `ui.custom-logo-url` | `...` | 自定义 Logo (Pro 专享) |
 
 建议索引：
 
@@ -600,9 +603,41 @@
 | --- | --- | --- |
 | `uk_system_config_key` | `store_id, config_key, deleted` | 配置键唯一 |
 
+### `payment_order`
+
+支付订单表。用于记录租户升级或续费套餐的支付记录。
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `id` | `BIGINT` | 是 | 订单 ID |
+| `store_id` | `BIGINT` | 是 | 门店 ID |
+| `order_no` | `VARCHAR(64)` | 是 | 系统订单号 |
+| `xpay_order_no` | `VARCHAR(64)` | 否 | XPay 支付平台流水号 |
+| `amount` | `DECIMAL(10,2)` | 是 | 支付金额 |
+| `plan_type` | `VARCHAR(32)` | 是 | 目标套餐类型：`free`, `pro` |
+| `duration_months` | `INT` | 是 | 购买时长（月） |
+| `status` | `VARCHAR(32)` | 是 | 订单状态：`pending`, `paid`, `cancelled`, `failed` |
+| `pay_type` | `VARCHAR(32)` | 否 | 支付方式：`wechat`, `alipay` |
+| `paid_at` | `DATETIME(3)` | 否 | 支付完成时间 |
+| `created_at` | `DATETIME(3)` | 是 | 创建时间 |
+
+### `referral_record`
+
+推荐关系与奖励记录表。
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `id` | `BIGINT` | 是 | 记录 ID |
+| `inviter_store_id` | `BIGINT` | 是 | 邀请人门店 ID |
+| `invitee_store_id` | `BIGINT` | 是 | 被邀请人门店 ID |
+| `status` | `VARCHAR(32)` | 是 | 奖励状态：`pending`, `rewarded` |
+| `reward_days` | `INT` | 是 | 奖励天数 |
+| `created_at` | `DATETIME(3)` | 是 | 记录时间 |
+| `rewarded_at` | `DATETIME(3)` | 否 | 奖励发放时间 |
+
 ## Redis 缓存键设计
 
-Redis 只保存会话、短期状态、热点用户信息和轻量控制数据，不保存最终确认记录、审计日志、访问日志等关键业务事实。
+Redis 只保存会话、短期状态、热点用户信息 and 轻量控制数据，不保存最终确认记录、审计日志、访问日志等关键业务事实。
 
 统一前缀：
 
@@ -624,18 +659,6 @@ proofly:{env}:auth:access:{tokenId}
 | TTL | 2 小时 |
 | 用途 | 后台用户 access token 会话 |
 | 值 | `userId`、`storeId`、`roles`、`loginAt`、`expiresAt` |
-
-示例值：
-
-```json
-{
-  "userId": 10001,
-  "storeId": 20001,
-  "roles": ["owner", "designer"],
-  "loginAt": "2026-05-06T10:00:00+08:00",
-  "expiresAt": "2026-05-06T12:00:00+08:00"
-}
-```
 
 ### 后台刷新令牌
 
@@ -663,33 +686,18 @@ proofly:{env}:user:profile:{userId}
 | 用途 | 缓存当前用户基础信息，减少频繁查库 |
 | 值 | `userId`、`storeId`、`nickname`、`phone`、`status`、`roles` |
 
-用户资料、状态或角色变更后，需要删除该 key。
-
-### 用户角色权限
+### 租户套餐权益
 
 ```text
-proofly:{env}:user:roles:{userId}
+proofly:{env}:store:entitlement:{storeId}
 ```
 
 | 项 | 说明 |
 | --- | --- |
-| 类型 | `Set` 或 `String` JSON 数组 |
-| TTL | 30 分钟 |
-| 用途 | 缓存用户角色编码 |
-| 值 | `owner`、`designer`、`admin` 等角色编码 |
-
-### 登出黑名单
-
-```text
-proofly:{env}:auth:blacklist:{tokenId}
-```
-
-| 项 | 说明 |
-| --- | --- |
-| 类型 | `String` |
-| TTL | 到原 access token 过期 |
-| 用途 | 登出或强制失效 token |
-| 值 | `logout`、`disabled`、`reset_password` 等原因 |
+| 类型 | `String`，JSON |
+| TTL | 1 小时 |
+| 用途 | 缓存租户套餐类型和有效期，加速权益校验 |
+| 值 | `planType`、`expiresAt` |
 
 ### 客户审稿 token
 
@@ -700,57 +708,8 @@ proofly:{env}:review:token:{token}
 | 项 | 说明 |
 | --- | --- |
 | 类型 | `String`，JSON |
-| TTL | 与 `review_link.expires_at` 对齐；无过期时间时可设置 24 小时短缓存 |
+| TTL | 与 `review_link.expires_at` 对齐 |
 | 用途 | 加速客户公开审稿链接校验 |
-| 值 | `reviewLinkId`、`storeId`、`projectId`、`currentVersionId`、`status`、`expiresAt` |
-
-示例值：
-
-```json
-{
-  "reviewLinkId": 30001,
-  "storeId": 20001,
-  "projectId": 40001,
-  "currentVersionId": 50002,
-  "status": "active",
-  "expiresAt": "2026-06-05T23:59:59+08:00"
-}
-```
-
-项目当前版本变化、链接停用、链接重新生成时，需要删除或刷新该 key。
-
-### 客户审稿访问限流
-
-```text
-proofly:{env}:rate:review:{token}:{ip}
-```
-
-| 项 | 说明 |
-| --- | --- |
-| 类型 | `String` 或 `Counter` |
-| TTL | 1 分钟 |
-| 用途 | 客户公开审稿链接防刷 |
-| 值 | 当前窗口访问次数 |
-
-### 登录失败计数
-
-```text
-proofly:{env}:auth:login-fail:{usernameOrPhone}
-```
-
-| 项 | 说明 |
-| --- | --- |
-| 类型 | `String` 或 `Counter` |
-| TTL | 15 分钟 |
-| 用途 | 登录失败计数和临时锁定判断 |
-| 值 | 当前窗口失败次数 |
-
-### Redis 使用约束
-
-- 不把 `confirmation_record`、`audit_log`、`review_access_log` 只写入 Redis。
-- Redis 缓存命中后仍需遵守门店隔离和权限判断。
-- 关键业务状态变更后，优先删除缓存而不是尝试局部修改复杂缓存。
-- 客户审稿 token 的 Redis key 可保存明文 token，但 MySQL 只保存 `token_hash`。
 
 ## MinIO 对象路径设计
 
@@ -760,7 +719,7 @@ Bucket 默认使用配置：
 MINIO_BUCKET=proofly
 ```
 
-业务隔离主要依赖对象 key 中的 `storeId`，而不是为每个门店创建独立 bucket。
+业务隔离主要依赖对象 key 中的 `storeId`。
 
 ### 路径规则
 
@@ -770,16 +729,16 @@ MINIO_BUCKET=proofly
 stores/{storeId}/projects/{projectId}/versions/{versionId}/original/{fileId}-{safeFilename}
 ```
 
+语音批注：
+
+```text
+stores/{storeId}/projects/{projectId}/versions/{versionId}/voice/{annotationId}.webm
+```
+
 预览文件：
 
 ```text
 stores/{storeId}/projects/{projectId}/versions/{versionId}/preview/{fileId}-{pageOrSize}.{ext}
-```
-
-版本附件：
-
-```text
-stores/{storeId}/projects/{projectId}/versions/{versionId}/attachment/{fileId}-{safeFilename}
 ```
 
 确认单导出文件：
@@ -787,49 +746,3 @@ stores/{storeId}/projects/{projectId}/versions/{versionId}/attachment/{fileId}-{
 ```text
 stores/{storeId}/projects/{projectId}/confirmations/{confirmationId}/confirmation-{confirmationId}.pdf
 ```
-
-临时上传文件：
-
-```text
-stores/{storeId}/temp/uploads/{yyyyMMdd}/{uploadId}/{safeFilename}
-```
-
-### 路径变量
-
-| 变量 | 说明 |
-| --- | --- |
-| `storeId` | 门店 ID |
-| `projectId` | 项目 ID |
-| `versionId` | 版本 ID |
-| `fileId` | 文件元数据 ID |
-| `confirmationId` | 确认记录 ID |
-| `uploadId` | 临时上传 ID |
-| `yyyyMMdd` | 上传日期 |
-| `safeFilename` | 安全文件名 |
-| `pageOrSize` | PDF 页码、图片尺寸或预览规格，如 `page-1`、`thumb-800` |
-| `ext` | 文件扩展名 |
-
-### 文件名约定
-
-- `safeFilename` 只保留字母、数字、点、下划线和短横线。
-- 中文文件名和原始文件名保存到 MySQL `file_object.original_filename`。
-- MinIO object key 中必须包含 `fileId`，不能只依赖原文件名。
-- 同一个版本的原文件、预览文件、附件分目录保存，避免覆盖。
-- 临时上传文件只允许在 `temp/uploads` 路径下清理。
-
-### 文件删除约定
-
-- 未关联项目版本的临时文件可以按 TTL 清理。
-- 已关联 `project_version` 的原文件和预览文件默认不删除。
-- 已确认版本关联文件不允许物理删除。
-- 确认单导出文件不允许覆盖；重新导出应生成新的 `file_object` 记录或保留导出版本。
-
-## 后续扩展
-
-MVP 阶段暂不设计套餐、账单、AI 相关表。后续进入 SaaS 化或 AI 能力开发时，再追加：
-
-- `subscription`：门店订阅。
-- `usage_record`：项目数、存储空间、员工数等用量。
-- `billing_record`：账单记录。
-- `ai_task`：AI 总结、智能建议等异步任务。
-- `knowledge_document`：门店知识库文档。

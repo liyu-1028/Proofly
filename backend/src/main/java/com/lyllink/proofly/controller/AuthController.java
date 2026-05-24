@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lyllink.proofly.dto.req.RegisterRequest;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -28,7 +32,14 @@ public class AuthController {
 
     @PostMapping("/login")
     public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        log.debug("收到登录请求: account={}", request.account());
         return ApiResponse.success(authService.login(request));
+    }
+
+    @PostMapping("/register")
+    public ApiResponse<Void> register(@Valid @RequestBody RegisterRequest request) {
+        authService.register(request);
+        return ApiResponse.success(null);
     }
 
     @PostMapping("/refresh")

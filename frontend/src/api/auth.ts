@@ -23,8 +23,23 @@ export interface LoginPayload {
   password: string
 }
 
+export interface RegisterRequest {
+  phone: string
+  password: string
+  nickname: string
+  storeName: string
+  inviteCode?: string
+}
+
 export function login(payload: LoginPayload) {
   return request<AuthResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function register(payload: RegisterRequest) {
+  return request<void>('/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload),
   })

@@ -74,7 +74,7 @@
 - `/api/health`、`/api/public/**`、OpenAPI 文档路径放行.
 - `CurrentUser` 上下文，包含 `userId`、`storeId`、`roles`、`tokenId`。
 - `user`、`role`、`user_role`、`store` 的实体和数据访问 Mapper.
-- `docs/auth-seed.sql`，提供本地默认门店、角色和 `admin` 账号。
+- `docs/mysql-schema.sql` 末尾提供了本地默认门店、角色和 `admin` 账号的初始数据。
 - 基础异常响应和 JSON 格式 `401/403`。
 
 未完成：
@@ -89,7 +89,7 @@
 - 后台请求需要使用 `Authorization: Bearer <accessToken>`。
 - 只有 `admin` 和 `owner` 角色拥有“员工管理”权限。
 - 前端新增受限页面时，应在 `router/index.ts` 的 `meta.requiredRoles` 中定义准入角色。
-- 本地开发前需要执行 `docs/mysql-schema.sql` 和 `docs/auth-seed.sql`。
+- 本地开发前需要执行 `docs/mysql-schema.sql`。
 
 完成判定：
 
@@ -417,8 +417,7 @@
 - 健康检查接口：`GET /api/health`。
 - OpenAPI 依赖和基础路径配置.
 - MySQL 数据设计文档：`docs/database.md`。
-- MySQL 建表 SQL：`docs/mysql-schema.sql`。
-- 认证基础数据 SQL：`docs/auth-seed.sql`。
+- MySQL 建表与基础数据 SQL：`docs/mysql-schema.sql`。
 - M01 模块接口文档：`docs/api-m01-account-store-permission.md`。
 - M12 模块接口文档：`docs/api-m12-deployment-ops-openapi.md`。
 - README 和 AGENT 中已明确 Redis、MinIO 推荐版本。

@@ -267,6 +267,11 @@ onMounted(() => {
               </li>
             </ol>
           </div>
+
+          <div class="powered-by">
+            <p>由 <strong>审稿宝</strong> 提供支持</p>
+            <router-link to="/register" target="_blank" class="plg-link">免费创建您的审稿项目 &rarr;</router-link>
+          </div>
         </aside>
       </main>
     </template>
@@ -449,6 +454,34 @@ onMounted(() => {
 
 .annotation-list small {
   color: #98a2b3;
+}
+
+.powered-by {
+  margin-top: 8px;
+  text-align: center;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.powered-by p {
+  font-size: 13px;
+  color: #667085;
+  margin: 0 0 8px;
+}
+
+.plg-link {
+  display: inline-block;
+  font-size: 14px;
+  color: #2a9d8f;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.plg-link:hover {
+  color: #21867a;
 }
 
 @media (max-width: 960px) {

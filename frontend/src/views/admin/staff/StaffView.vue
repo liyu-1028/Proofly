@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Lock, RefreshRight } from '@element-plus/icons-vue'
 import { getUsers, createUser, updateUser, updateUserStatus, resetUserPassword, type UserResponse } from '@/api/admin'
 import { useSessionStore } from '@/stores/session'
@@ -94,7 +93,13 @@ const submitForm = async () => {
     dialogVisible.value = false
     fetchStaff()
   } catch (error: any) {
-    ElMessage.error(error.message || '操作失败')
+    // If it's a 403 or other backend error, it will have a message property from ApiError
+    ElMessage({
+      message: error.message || '操作失败',
+      type: 'error',
+      duration: 5000,
+      showClose: true
+    })
   } finally {
     formLoading.value = false
   }

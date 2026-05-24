@@ -116,6 +116,19 @@ onMounted(() => {
         <el-form-item label="部署模式">
           <el-tag type="info">{{ store?.deploymentMode }}</el-tag>
         </el-form-item>
+        <el-form-item label="当前套餐">
+          <el-tag :type="store?.planType === 'pro' ? 'warning' : 'info'">
+            {{ store?.planType === 'pro' ? '高级版 (Pro)' : '免费版 (Free)' }}
+          </el-tag>
+          <span v-if="store?.planExpiresAt" style="margin-left: 12px; font-size: 13px; color: #999">
+            有效期至：{{ new Date(store.planExpiresAt).toLocaleDateString() }}
+          </span>
+          <el-button v-if="store?.planType === 'free'" type="warning" link style="margin-left: 12px">升级高级版</el-button>
+        </el-form-item>
+        <el-form-item label="门店邀请码">
+          <code style="font-weight: bold; color: #2a9d8f">{{ store?.inviteCode }}</code>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #999">邀请好友注册，双方均可获得高级版奖励。</p>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="saving" @click="handleSave">保存修改</el-button>
         </el-form-item>

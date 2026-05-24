@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import DashboardView from '@/views/admin/dashboard/DashboardView.vue'
 import LoginView from '@/views/auth/LoginView.vue'
+import RegisterView from '@/views/auth/RegisterView.vue'
 import ProjectDetailView from '@/views/admin/projects/ProjectDetailView.vue'
 import ProjectsView from '@/views/admin/projects/ProjectsView.vue'
 import SettingsView from '@/views/admin/settings/SettingsView.vue'
@@ -20,6 +21,14 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
+      meta: {
+        public: true,
+      },
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: RegisterView,
       meta: {
         public: true,
       },

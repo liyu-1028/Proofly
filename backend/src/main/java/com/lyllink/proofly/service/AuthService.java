@@ -23,6 +23,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.lyllink.proofly.dao.UserRoleMapper;
+import com.lyllink.proofly.dto.req.RegisterRequest;
+import com.lyllink.proofly.entity.RoleEntity;
+import com.lyllink.proofly.entity.UserRoleEntity;
+import java.util.UUID;
+
 @Service
 public class AuthService {
 
@@ -30,6 +37,7 @@ public class AuthService {
 
     private final UserMapper userMapper;
     private final RoleMapper roleMapper;
+    private final UserRoleMapper userRoleMapper;
     private final StoreMapper storeMapper;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
@@ -37,15 +45,89 @@ public class AuthService {
     public AuthService(
             UserMapper userMapper,
             RoleMapper roleMapper,
+            UserRoleMapper userRoleMapper,
             StoreMapper storeMapper,
             PasswordEncoder passwordEncoder,
             TokenService tokenService
     ) {
         this.userMapper = userMapper;
         this.roleMapper = roleMapper;
+        this.userRoleMapper = userRoleMapper;
         this.storeMapper = storeMapper;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
+    }
+
+    @Transactional
+    public void register(RegisterRequest request) {
+        // 1. Check if phone already registered
+        if (userMapper.selectCount(new LambdaQueryWrapper<UserEntity>().eq(UserEntity::getPhone, request.getPhone()).eq(UserEntity::getDeleted, false)) > 0) {
+            throw BusinessException.conflict("该手机号已注册");
+        }
+
+        // 2. Create Store
+        StoreEntity store = new StoreEntity();
+        long storeId = IdWorker.getId();
+        store.setId(storeId);
+        store.setName(request.getStoreName().trim());
+        store.setStatus(ACTIVE);
+        store.setDeploymentMode("multi-tenant");
+        store.setPlanType("free");
+        store.setInviteCode(generateInviteCode());
+        store.setCreatedAt(LocalDateTime.now());
+        store.setUpdatedAt(LocalDateTime.now());
+        store.setDeleted(false);
+        storeMapper.insert(store);
+
+        // 3. Create User (Owner)
+        UserEntity user = new UserEntity();
+        long userId = IdWorker.getId();
+        user.setId(userId);
+        user.setStoreId(storeId);
+        user.setUsername(request.getPhone()); // Use phone as username for self-registration
+        user.setNickname(request.getNickname().trim());
+        user.setPhone(request.getPhone());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setStatus(ACTIVE);
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setDeleted(false);
+        userMapper.insert(user);
+
+        // 4. Initialize default roles for the new store
+        initializeStoreRoles(storeId, userId);
+    }
+
+    private void initializeStoreRoles(Long storeId, Long ownerId) {
+        RoleEntity ownerRole = createRole(storeId, "owner", "门店老板", "管理门店项目和员工");
+        RoleEntity designerRole = createRole(storeId, "designer", "设计师", "创建项目、上传版本、处理标注");
+        
+        // Assign owner role to the user
+        UserRoleEntity ur = new UserRoleEntity();
+        ur.setId(IdWorker.getId());
+        ur.setStoreId(storeId);
+        ur.setUserId(ownerId);
+        ur.setRoleId(ownerRole.getId());
+        ur.setCreatedAt(LocalDateTime.now());
+        userRoleMapper.insert(ur);
+    }
+
+    private RoleEntity createRole(Long storeId, String code, String name, String description) {
+        RoleEntity role = new RoleEntity();
+        role.setId(IdWorker.getId());
+        role.setStoreId(storeId);
+        role.setCode(code);
+        role.setName(name);
+        role.setDescription(description);
+        role.setCreatedAt(LocalDateTime.now());
+        role.setUpdatedAt(LocalDateTime.now());
+        role.setDeleted(false);
+        roleMapper.insert(role);
+        return role;
+    }
+
+    private String generateInviteCode() {
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
     }
 
     @Transactional

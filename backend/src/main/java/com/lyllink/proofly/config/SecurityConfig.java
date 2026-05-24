@@ -34,6 +34,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/auth/login",
+                                "/api/auth/register",
                                 "/api/auth/refresh",
                                 "/api/health",
                                 "/api-docs/**",

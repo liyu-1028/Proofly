@@ -39,17 +39,20 @@ public class UserService {
     private final RoleMapper roleMapper;
     private final UserRoleMapper userRoleMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UsageService usageService;
 
     public UserService(
             UserMapper userMapper,
             RoleMapper roleMapper,
             UserRoleMapper userRoleMapper,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            UsageService usageService
     ) {
         this.userMapper = userMapper;
         this.roleMapper = roleMapper;
         this.userRoleMapper = userRoleMapper;
         this.passwordEncoder = passwordEncoder;
+        this.usageService = usageService;
     }
 
     public List<UserResponse> list(CurrentUser currentUser, String keyword, String status) {
@@ -77,6 +80,7 @@ public class UserService {
 
     @Transactional
     public UserResponse create(CurrentUser currentUser, UserCreateRequest request) {
+        usageService.checkStaffLimit(currentUser.storeId());
         requireOwnerOrAdmin(currentUser);
         String username = request.username().trim();
         String phone = trimToNull(request.phone());

@@ -75,7 +75,25 @@ async function handleSubmit() {
         <button class="primary-button" type="submit" :disabled="!canSubmit">
           {{ submitting ? '登录中' : '登录' }}
         </button>
+
+        <div class="auth-footer">
+          还没有账号？<router-link to="/register">立即免费注册</router-link>
+        </div>
       </form>
     </section>
   </main>
 </template>
+
+<style scoped>
+.auth-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
+  color: #666;
+}
+.auth-footer a {
+  color: #2a9d8f;
+  text-decoration: none;
+  font-weight: 500;
+}
+</style>
