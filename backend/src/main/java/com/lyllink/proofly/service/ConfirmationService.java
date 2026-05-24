@@ -20,17 +20,20 @@ public class ConfirmationService {
     private final ProjectMapper projectMapper;
     private final ProjectVersionMapper projectVersionMapper;
     private final AuditLogService auditLogService;
+    private final NotificationService notificationService;
 
     public ConfirmationService(
             ConfirmationRecordMapper confirmationRecordMapper,
             ProjectMapper projectMapper,
             ProjectVersionMapper projectVersionMapper,
-            AuditLogService auditLogService
+            AuditLogService auditLogService,
+            NotificationService notificationService
     ) {
         this.confirmationRecordMapper = confirmationRecordMapper;
         this.projectMapper = projectMapper;
         this.projectVersionMapper = projectVersionMapper;
         this.auditLogService = auditLogService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -87,6 +90,17 @@ public class ConfirmationService {
                 record.getProjectId(),
                 record.getCustomerName(),
                 "确认定稿了版本: " + version.getVersionName()
+        );
+
+        // Trigger notification for project owner
+        notificationService.create(
+                record.getStoreId(),
+                project.getOwnerUserId(),
+                project.getId(),
+                "CONFIRMATION",
+                "客户已确认定稿",
+                String.format("客户 [%s] 已正式确认项目 [%s] 的版本 [%s]。", 
+                        record.getCustomerName(), project.getName(), version.getVersionName())
         );
 
         return record;

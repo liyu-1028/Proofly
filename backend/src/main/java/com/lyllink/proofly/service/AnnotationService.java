@@ -23,17 +23,20 @@ public class AnnotationService {
     private final AnnotationCommentMapper annotationCommentMapper;
     private final ProjectMapper projectMapper;
     private final AuditLogService auditLogService;
+    private final NotificationService notificationService;
 
     public AnnotationService(
             AnnotationMapper annotationMapper,
             AnnotationCommentMapper annotationCommentMapper,
             ProjectMapper projectMapper,
-            AuditLogService auditLogService
+            AuditLogService auditLogService,
+            NotificationService notificationService
     ) {
         this.annotationMapper = annotationMapper;
         this.annotationCommentMapper = annotationCommentMapper;
         this.projectMapper = projectMapper;
         this.auditLogService = auditLogService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -67,6 +70,17 @@ public class AnnotationService {
                 annotation.getProjectId(),
                 annotation.getCustomerName(),
                 "提交了新的修改意见: " + annotation.getContent()
+        );
+
+        // Trigger notification for project owner
+        notificationService.create(
+                annotation.getStoreId(),
+                project.getOwnerUserId(),
+                project.getId(),
+                "NEW_ANNOTATION",
+                "收到新的修改意见",
+                String.format("客户 [%s] 对项目 [%s] 提交了新的反馈: %s", 
+                        annotation.getCustomerName(), project.getName(), annotation.getContent())
         );
 
         return annotation;

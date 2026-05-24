@@ -1,21 +1,31 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import { useRoute, useRouter } from 'vue-router'
 
 import prooflyLogo from '@/assets/proofly-logo.svg'
 import { useSessionStore } from '@/stores/session'
+import { useNotificationStore } from '@/stores/notification'
+import NotificationCenter from '@/components/NotificationCenter.vue'
 
 const route = useRoute()
 const router = useRouter()
 const session = useSessionStore()
+const notificationStore = useNotificationStore()
 
+const showNotifications = ref(false)
 const useBareLayout = computed(() => route.meta.public || route.name === 'login')
 
 async function handleLogout() {
   await session.logout()
   await router.replace('/login')
 }
+
+onMounted(() => {
+  if (session.isLoggedIn) {
+    notificationStore.fetchUnreadCount()
+  }
+})
 </script>
 
 <template>
@@ -35,6 +45,10 @@ async function handleLogout() {
         <RouterLink to="/admin/dashboard">工作台</RouterLink>
         <RouterLink to="/admin/projects">审稿项目</RouterLink>
         <RouterLink v-if="session.canManageStaff" to="/admin/staff">员工管理</RouterLink>
+        <a href="javascript:;" class="nav-item-notification" @click="showNotifications = true">
+          通知中心
+          <el-badge v-if="notificationStore.unreadCount > 0" :value="notificationStore.unreadCount" :max="99" class="unread-badge" />
+        </a>
         <RouterLink to="/admin/settings">系统设置</RouterLink>
       </nav>
 
@@ -48,5 +62,26 @@ async function handleLogout() {
     <main class="main-panel">
       <RouterView />
     </main>
+
+    <NotificationCenter v-model:visible="showNotifications" />
   </div>
 </template>
+
+<style scoped>
+.nav-item-notification {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  color: #c0c4cc;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+.nav-item-notification:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+.unread-badge {
+  margin-left: 8px;
+}
+</style>

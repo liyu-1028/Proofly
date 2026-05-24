@@ -2,12 +2,15 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getCurrentStore, updateCurrentStore, type StoreResponse } from '@/api/admin'
+import { getConfigs, updateConfig, type SystemConfigResponse } from '@/api/configs'
 import { useSessionStore } from '@/stores/session'
 
 const session = useSessionStore()
 const loading = ref(false)
 const saving = ref(false)
+const configSaving = ref<Record<string, boolean>>({})
 const store = ref<StoreResponse | null>(null)
+const configs = ref<SystemConfigResponse[]>([])
 
 const form = ref({
   name: '',
@@ -15,18 +18,22 @@ const form = ref({
   contactPhone: ''
 })
 
-const fetchStore = async () => {
+const fetchStoreAndConfigs = async () => {
   loading.value = true
   try {
-    const data = await getCurrentStore()
-    store.value = data
+    const [storeData, configData] = await Promise.all([
+      getCurrentStore(),
+      getConfigs()
+    ])
+    store.value = storeData
     form.value = {
-      name: data.name,
-      contactName: data.contactName || '',
-      contactPhone: data.contactPhone || ''
+      name: storeData.name,
+      contactName: storeData.contactName || '',
+      contactPhone: storeData.contactPhone || ''
     }
+    configs.value = configData
   } catch (error: any) {
-    ElMessage.error(error.message || '获取门店信息失败')
+    ElMessage.error(error.message || '获取信息失败')
   } finally {
     loading.value = false
   }
@@ -54,8 +61,23 @@ const handleSave = async () => {
   }
 }
 
+const handleSaveConfig = async (cfg: SystemConfigResponse) => {
+  configSaving.value[cfg.configKey] = true
+  try {
+    await updateConfig(cfg.configKey, {
+      configValue: cfg.configValue,
+      description: cfg.description
+    })
+    ElMessage.success(`配置 [${cfg.configKey}] 已更新`)
+  } catch (error: any) {
+    ElMessage.error(error.message || '配置更新失败')
+  } finally {
+    configSaving.value[cfg.configKey] = false
+  }
+}
+
 onMounted(() => {
-  fetchStore()
+  fetchStoreAndConfigs()
 })
 </script>
 
@@ -98,6 +120,41 @@ onMounted(() => {
           <el-button type="primary" :loading="saving" @click="handleSave">保存修改</el-button>
         </el-form-item>
       </el-form>
+    </div>
+
+    <div class="panel" style="margin-top: 24px">
+      <div class="section-header">
+        <h2>业务配置</h2>
+        <p>配置上传文件大小、允许类型以及系统业务行为。</p>
+      </div>
+
+      <el-table :data="configs" style="width: 100%">
+        <el-table-column prop="configKey" label="配置项" width="200">
+          <template #default="{ row }">
+            <code>{{ row.configKey }}</code>
+            <div style="font-size: 12px; color: #999">{{ row.description }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column label="配置值">
+          <template #default="{ row }">
+            <el-input v-model="row.configValue" placeholder="请输入配置值">
+              <template #append v-if="row.valueType === 'number' && row.configKey.includes('size')">MB</template>
+            </el-input>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100" align="center">
+          <template #default="{ row }">
+            <el-button 
+              type="primary" 
+              link 
+              :loading="configSaving[row.configKey]"
+              @click="handleSaveConfig(row)"
+            >
+              保存
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
 
     <div class="panel" style="margin-top: 24px">

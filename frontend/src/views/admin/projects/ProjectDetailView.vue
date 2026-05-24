@@ -284,6 +284,12 @@ async function copyText(text?: string | null) {
   ElMessage.success('审稿链接已复制')
 }
 
+async function copyReminderText(url: string) {
+  const text = `您好，项目 [${project.value?.name}] 的设计稿已更新，请点击链接查阅并提出修改意见：${url}`
+  await navigator.clipboard.writeText(text)
+  ElMessage.success('提醒文案已复制，可直接粘贴发送给客户')
+}
+
 async function createReviewLink() {
   creatingReviewLink.value = true
   try {
@@ -542,6 +548,7 @@ watch(
             <div v-if="latestCreatedLink?.url" class="review-link-copy">
               <span>{{ latestCreatedLink.url }}</span>
               <el-button type="primary" size="small" @click="copyText(latestCreatedLink.url)">复制</el-button>
+              <el-button type="success" size="small" @click="copyReminderText(latestCreatedLink.url)">提醒文案</el-button>
             </div>
 
             <div class="review-link-form">
@@ -574,6 +581,7 @@ watch(
                 </div>
                 <div class="review-link-actions">
                   <el-button link type="primary" @click="copyText(link.url)">复制</el-button>
+                  <el-button link type="success" @click="copyReminderText(link.url)">提醒</el-button>
                   <el-button link type="warning" @click="toggleReviewLink(link)">
                     {{ link.status === 'disabled' ? '启用' : '禁用' }}
                   </el-button>
