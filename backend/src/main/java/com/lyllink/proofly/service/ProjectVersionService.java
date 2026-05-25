@@ -48,7 +48,7 @@ public class ProjectVersionService {
     }
 
     /**
-     * List all versions for a project.
+     * 列出项目的所有版本。
      */
     public List<ProjectVersionResponse> listVersions(CurrentUser currentUser, Long projectId) {
         return listVersionsInternal(currentUser.storeId(), projectId);
@@ -67,7 +67,7 @@ public class ProjectVersionService {
             return List.of();
         }
 
-        // Batch fetch files and user nicknames
+        // 批量获取文件和用户昵称
         Set<Long> fileIds = versions.stream().map(ProjectVersionEntity::getFileId).collect(Collectors.toSet());
         Map<Long, FileObjectEntity> files = fileObjectMapper.selectBatchIds(fileIds).stream()
                 .collect(Collectors.toMap(FileObjectEntity::getId, f -> f));
@@ -85,7 +85,7 @@ public class ProjectVersionService {
     }
 
     /**
-     * Upload a new version for a project.
+     * 为项目上传新版本。
      */
     @Transactional
     public ProjectVersionResponse uploadVersion(
@@ -105,16 +105,16 @@ public class ProjectVersionService {
             throw BusinessException.badRequest("已确认定稿的项目不能上传新版本");
         }
 
-        // 1. Prepare version record
+        // 1. 准备版本记录
         Long versionId = IdWorker.getId();
         Integer nextVersionNo = getNextVersionNo(currentUser.storeId(), projectId);
         String versionName = "V" + nextVersionNo;
 
-        // 2. Upload file (transactionally linked via versionId)
+        // 2. 上传文件（通过 versionId 建立事务关联）
         FileObjectEntity fileObject = fileService.uploadFile(
                 currentUser, projectId, versionId, originalFilename, contentType, size, inputStream, "original");
 
-        // 3. Create version entity
+        // 3. 创建版本实体
         ProjectVersionEntity version = new ProjectVersionEntity();
         version.setId(versionId);
         version.setStoreId(currentUser.storeId());
@@ -132,14 +132,14 @@ public class ProjectVersionService {
         version.setUpdatedBy(currentUser.userId());
         version.setDeleted(false);
 
-        // 4. Update other versions to not current
+        // 4. 更新其他版本为非当前版本
         projectVersionMapper.update(null, new LambdaUpdateWrapper<ProjectVersionEntity>()
                 .eq(ProjectVersionEntity::getProjectId, projectId)
                 .set(ProjectVersionEntity::getIsCurrent, false));
 
         projectVersionMapper.insert(version);
 
-        // 5. Update project status and current_version_id
+        // 5. 更新项目状态和 current_version_id
         project.setCurrentVersionId(versionId);
         if ("draft".equals(project.getStatus())) {
             project.setStatus("waiting_feedback");

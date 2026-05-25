@@ -29,7 +29,7 @@ public class UsageService {
             return;
         }
 
-        // Free plan limit: 3 active projects
+        // 免费版限制：3 个活跃项目
         long count = projectMapper.selectCount(new LambdaQueryWrapper<ProjectEntity>()
                 .eq(ProjectEntity::getStoreId, storeId)
                 .eq(ProjectEntity::getDeleted, false)
@@ -46,7 +46,7 @@ public class UsageService {
             return;
         }
 
-        // Free plan limit: 1 staff (owner only)
+        // 免费版限制：1 名员工（仅限老板）
         long count = userMapper.selectCount(new LambdaQueryWrapper<UserEntity>()
                 .eq(UserEntity::getStoreId, storeId)
                 .eq(UserEntity::getDeleted, false));

@@ -53,6 +53,8 @@ public class AdminAnnotationController {
         resp.setWidthRatio(entity.getWidthRatio());
         resp.setHeightRatio(entity.getHeightRatio());
         resp.setContent(entity.getContent());
+        resp.setMediaUrl(entity.getMediaUrl());
+        resp.setMediaDuration(entity.getMediaDuration());
         resp.setCustomerName(entity.getCustomerName());
         resp.setStatus(entity.getStatus());
         resp.setCreatedAt(entity.getCreatedAt());

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { register } from '@/api/auth'
 import prooflyLogo from '@/assets/proofly-logo.svg'
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(false)
 
 const form = reactive({
@@ -14,6 +15,12 @@ const form = reactive({
   nickname: '',
   storeName: '',
   inviteCode: ''
+})
+
+onMounted(() => {
+  if (route.query.code) {
+    form.inviteCode = route.query.code as string
+  }
 })
 
 const handleRegister = async () => {

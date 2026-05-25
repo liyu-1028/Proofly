@@ -22,7 +22,7 @@ public class StorageService {
     }
 
     /**
-     * Upload an object to MinIO.
+     * 上传对象到 MinIO。
      */
     public void putObject(String objectKey, InputStream inputStream, String contentType, long size) {
         try {
@@ -40,7 +40,7 @@ public class StorageService {
     }
 
     /**
-     * Generate a presigned URL for an object (default 1 hour expiry).
+     * 生成对象的预签名 URL（默认 1 小时过期）。
      */
     public String getPresignedUrl(String objectKey) {
         try {

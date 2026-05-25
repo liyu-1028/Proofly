@@ -42,7 +42,7 @@ public class NotificationService {
                 .eq(NotificationEntity::getReceiverUserId, receiverId)
                 .eq(NotificationEntity::getDeleted, false)
                 .orderByDesc(NotificationEntity::getCreatedAt)
-                .last("LIMIT 50")) // Limit to recent 50
+                .last("LIMIT 50")) // 限制显示最近 50 条
                 .stream()
                 .map(this::toResponse)
                 .toList();

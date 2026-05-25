@@ -40,7 +40,7 @@ public class AnnotationService {
     }
 
     /**
-     * Customer submits an annotation.
+     * 客户提交标注。
      */
     @Transactional
     public AnnotationEntity createAnnotation(AnnotationEntity annotation) {
@@ -56,7 +56,7 @@ public class AnnotationService {
         annotation.setDeleted(false);
         annotationMapper.insert(annotation);
 
-        // Update project status to change_requested
+        // 更新项目状态为 change_requested
         if (!"change_requested".equals(project.getStatus()) && !"confirmed".equals(project.getStatus())) {
             project.setStatus("change_requested");
             project.setUpdatedAt(LocalDateTime.now());
@@ -72,7 +72,7 @@ public class AnnotationService {
                 "提交了新的修改意见: " + annotation.getContent()
         );
 
-        // Trigger notification for project owner
+        // 为项目负责人触发通知
         notificationService.create(
                 annotation.getStoreId(),
                 project.getOwnerUserId(),
@@ -87,7 +87,7 @@ public class AnnotationService {
     }
 
     /**
-     * Designer resolves an annotation.
+     * 设计师处理标注。
      */
     @Transactional
     public void resolveAnnotation(CurrentUser user, Long annotationId, String status) {
@@ -116,7 +116,7 @@ public class AnnotationService {
     }
 
     /**
-     * Reply to an annotation.
+     * 回复标注。
      */
     @Transactional
     public AnnotationCommentEntity createComment(AnnotationCommentEntity comment) {
@@ -127,7 +127,7 @@ public class AnnotationService {
     }
 
     /**
-     * List annotations for a project version.
+     * 列出项目版本的标注。
      */
     public List<AnnotationEntity> listAnnotations(Long storeId, Long projectId, Long versionId) {
         return annotationMapper.selectList(new LambdaQueryWrapper<AnnotationEntity>()
@@ -139,7 +139,7 @@ public class AnnotationService {
     }
 
     /**
-     * List comments for an annotation.
+     * 列出标注的评论。
      */
     public List<AnnotationCommentEntity> listComments(Long storeId, Long annotationId) {
         return annotationCommentMapper.selectList(new LambdaQueryWrapper<AnnotationCommentEntity>()

@@ -28,7 +28,7 @@ public class FileService {
     }
 
     /**
-     * Upload a file and save its metadata.
+     * 上传文件并保存元数据。
      */
     public FileObjectEntity uploadFile(
             CurrentUser currentUser,
@@ -45,10 +45,10 @@ public class FileService {
         String objectKey = String.format("stores/%d/projects/%d/versions/%d/%d-%s",
                 currentUser.storeId(), projectId, versionId, fileId, originalFilename);
 
-        // 1. Upload to MinIO
+        // 1. 上传到 MinIO
         storageService.putObject(objectKey, inputStream, contentType, size);
 
-        // 2. Save metadata to DB
+        // 2. 保存元数据到数据库
         FileObjectEntity entity = new FileObjectEntity();
         entity.setId(fileId);
         entity.setStoreId(currentUser.storeId());
@@ -57,7 +57,7 @@ public class FileService {
         entity.setObjectKey(objectKey);
         entity.setBucket(minioProperties.getBucket());
         entity.setOriginalFilename(originalFilename);
-        entity.setSafeFilename(originalFilename); // Could be cleaned up further
+        entity.setSafeFilename(originalFilename); // 可以进一步清理
         entity.setFileExt(fileExt);
         entity.setMimeType(contentType);
         entity.setFileSize(size);
@@ -73,12 +73,55 @@ public class FileService {
     }
 
     /**
-     * Get preview URL for a file.
+     * 获取文件的预览 URL。
      */
     public String getFilePreviewUrl(String objectKey) {
         if (!StringUtils.hasText(objectKey)) {
             return null;
         }
         return storageService.getPresignedUrl(objectKey);
+    }
+
+    /**
+     * 上传文件并保存元数据（公开版本）。
+     */
+    public FileObjectEntity uploadPublicFile(
+            Long storeId,
+            Long projectId,
+            Long versionId,
+            String originalFilename,
+            String contentType,
+            long size,
+            InputStream inputStream,
+            String fileRole
+    ) {
+        Long fileId = IdWorker.getId();
+        String fileExt = StringUtils.getFilenameExtension(originalFilename);
+        String objectKey = String.format("stores/%d/public/%d-%s",
+                storeId, fileId, originalFilename);
+
+        // 1. 上传到 MinIO
+        storageService.putObject(objectKey, inputStream, contentType, size);
+
+        // 2. 保存元数据到数据库
+        FileObjectEntity entity = new FileObjectEntity();
+        entity.setId(fileId);
+        entity.setStoreId(storeId);
+        entity.setProjectId(projectId);
+        entity.setVersionId(versionId);
+        entity.setObjectKey(objectKey);
+        entity.setBucket(minioProperties.getBucket());
+        entity.setOriginalFilename(originalFilename);
+        entity.setSafeFilename(originalFilename);
+        entity.setFileExt(fileExt);
+        entity.setMimeType(contentType);
+        entity.setFileSize(size);
+        entity.setFileRole(fileRole);
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
+        entity.setDeleted(false);
+
+        fileObjectMapper.insert(entity);
+        return entity;
     }
 }

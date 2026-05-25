@@ -74,6 +74,14 @@ const router = createRouter({
       },
     },
     {
+      path: '/admin/referral',
+      name: 'referral',
+      component: () => import('@/views/admin/referral/ReferralView.vue'),
+      meta: {
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/review/:token',
       name: 'public-review',
       component: ReviewView,

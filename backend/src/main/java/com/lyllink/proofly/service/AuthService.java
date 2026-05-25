@@ -41,6 +41,7 @@ public class AuthService {
     private final StoreMapper storeMapper;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final ReferralService referralService;
 
     public AuthService(
             UserMapper userMapper,
@@ -48,7 +49,8 @@ public class AuthService {
             UserRoleMapper userRoleMapper,
             StoreMapper storeMapper,
             PasswordEncoder passwordEncoder,
-            TokenService tokenService
+            TokenService tokenService,
+            ReferralService referralService
     ) {
         this.userMapper = userMapper;
         this.roleMapper = roleMapper;
@@ -56,16 +58,17 @@ public class AuthService {
         this.storeMapper = storeMapper;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
+        this.referralService = referralService;
     }
 
     @Transactional
     public void register(RegisterRequest request) {
-        // 1. Check if phone already registered
+        // 1. 检查手机号是否已注册
         if (userMapper.selectCount(new LambdaQueryWrapper<UserEntity>().eq(UserEntity::getPhone, request.getPhone()).eq(UserEntity::getDeleted, false)) > 0) {
             throw BusinessException.conflict("该手机号已注册");
         }
 
-        // 2. Create Store
+        // 2. 创建门店
         StoreEntity store = new StoreEntity();
         long storeId = IdWorker.getId();
         store.setId(storeId);
@@ -79,12 +82,17 @@ public class AuthService {
         store.setDeleted(false);
         storeMapper.insert(store);
 
-        // 3. Create User (Owner)
+        // 第2步：如果存在邀请码，绑定推荐关系
+        if (StringUtils.hasText(request.getInviteCode())) {
+            referralService.bindReferral(storeId, request.getInviteCode().trim());
+        }
+
+        // 3. 创建用户 (所有者)
         UserEntity user = new UserEntity();
         long userId = IdWorker.getId();
         user.setId(userId);
         user.setStoreId(storeId);
-        user.setUsername(request.getPhone()); // Use phone as username for self-registration
+        user.setUsername(request.getPhone()); // 自助注册使用手机号作为用户名
         user.setNickname(request.getNickname().trim());
         user.setPhone(request.getPhone());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
@@ -94,7 +102,7 @@ public class AuthService {
         user.setDeleted(false);
         userMapper.insert(user);
 
-        // 4. Initialize default roles for the new store
+        // 4. 初始化新门店的默认角色
         initializeStoreRoles(storeId, userId);
     }
 
@@ -102,7 +110,7 @@ public class AuthService {
         RoleEntity ownerRole = createRole(storeId, "owner", "门店老板", "管理门店项目和员工");
         RoleEntity designerRole = createRole(storeId, "designer", "设计师", "创建项目、上传版本、处理标注");
         
-        // Assign owner role to the user
+        // 为用户分配所有者角色
         UserRoleEntity ur = new UserRoleEntity();
         ur.setId(IdWorker.getId());
         ur.setStoreId(storeId);

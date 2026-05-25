@@ -18,6 +18,11 @@ const form = ref({
   contactPhone: ''
 })
 
+const brandForm = ref({
+  logoUrl: '',
+  primaryColor: '#2a9d8f'
+})
+
 const fetchStoreAndConfigs = async () => {
   loading.value = true
   try {
@@ -32,6 +37,10 @@ const fetchStoreAndConfigs = async () => {
       contactPhone: storeData.contactPhone || ''
     }
     configs.value = configData
+    
+    // Extract branding info
+    brandForm.value.logoUrl = configData.find(c => c.configKey === 'brand.logo_url')?.configValue || ''
+    brandForm.value.primaryColor = configData.find(c => c.configKey === 'brand.primary_color')?.configValue || '#2a9d8f'
   } catch (error: any) {
     ElMessage.error(error.message || '获取信息失败')
   } finally {
@@ -73,6 +82,20 @@ const handleSaveConfig = async (cfg: SystemConfigResponse) => {
     ElMessage.error(error.message || '配置更新失败')
   } finally {
     configSaving.value[cfg.configKey] = false
+  }
+}
+
+const handleSaveBrandConfig = async (key: string, value: string) => {
+  if (store.value?.planType !== 'pro') {
+    ElMessage.warning('自定义品牌功能仅限高级版使用')
+    return
+  }
+  
+  try {
+    await updateConfig(key, { configValue: value })
+    ElMessage.success('品牌配置已更新')
+  } catch (error: any) {
+    ElMessage.error(error.message || '更新失败')
   }
 }
 
@@ -131,6 +154,34 @@ onMounted(() => {
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="saving" @click="handleSave">保存修改</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <div class="panel" style="margin-top: 24px">
+      <div class="section-header">
+        <h2>品牌设置</h2>
+        <p>配置您的专属 Logo 和品牌主色调，提升专业形象（仅限高级版）。</p>
+      </div>
+      
+      <el-form label-width="120px" style="max-width: 600px">
+        <el-form-item label="品牌 Logo">
+          <div class="logo-setting">
+            <el-input v-model="brandForm.logoUrl" placeholder="Logo 图片 URL" style="margin-bottom: 8px">
+              <template #append>
+                <el-button @click="handleSaveBrandConfig('brand.logo_url', brandForm.logoUrl)">保存</el-button>
+              </template>
+            </el-input>
+            <div v-if="brandForm.logoUrl" class="logo-preview">
+              <img :src="brandForm.logoUrl" alt="Logo Preview" />
+            </div>
+          </div>
+        </el-form-item>
+        <el-form-item label="品牌色 (Primary)">
+          <div style="display: flex; gap: 12px; align-items: center">
+            <el-color-picker v-model="brandForm.primaryColor" @change="handleSaveBrandConfig('brand.primary_color', brandForm.primaryColor)" />
+            <span>{{ brandForm.primaryColor }}</span>
+          </div>
         </el-form-item>
       </el-form>
     </div>
@@ -244,5 +295,16 @@ onMounted(() => {
 .info-item .value {
   font-size: 16px;
   font-weight: 500;
+}
+.logo-preview {
+  margin-top: 12px;
+  padding: 8px;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  max-width: 200px;
+}
+.logo-preview img {
+  max-width: 100%;
+  height: auto;
 }
 </style>

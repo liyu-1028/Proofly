@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { CircleCheck, Message, Pointer } from '@element-plus/icons-vue'
@@ -8,17 +8,69 @@ import { ApiError } from '@/api/http'
 import * as annotationApi from '@/api/annotations'
 import * as confirmationApi from '@/api/confirmations'
 import * as publicReviewApi from '@/api/public-review'
+import * as configApi from '@/api/configs'
+import * as pdfjsLib from 'pdfjs-dist'
+
+// Set worker path (usually needs to be copied to public or linked)
+// For local dev, we might need a specific URL. 
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
 
 const route = useRoute()
 
 const loading = ref(false)
+const brandingLoading = ref(false)
+const brandConfig = ref<Record<string, string>>({})
 const submittingAnnotation = ref(false)
 const confirming = ref(false)
 const errorMessage = ref('')
 const reviewData = ref<publicReviewApi.PublicProjectReviewResponse | null>(null)
 const selectedPoint = ref<{ xRatio: number; yRatio: number } | null>(null)
+const pdfCanvasRef = ref<HTMLCanvasElement | null>(null)
 
 const token = computed(() => String(route.params.token ?? ''))
+
+async function renderPdf() {
+  if (!activeVersion.value || !isImageVersion.value === false) return
+  if (!pdfCanvasRef.value) return
+  
+  try {
+    const loadingTask = pdfjsLib.getDocument(activeVersion.value.previewUrl)
+    const pdf = await loadingTask.promise
+    const page = await pdf.getPage(1) // Just render page 1 for MVP
+    
+    const viewport = page.getViewport({ scale: 1.5 })
+    const canvas = pdfCanvasRef.value
+    const context = canvas.getContext('2d')
+    if (!context) return
+    
+    canvas.height = viewport.height
+    canvas.width = viewport.width
+    
+    const renderContext = {
+      canvasContext: context,
+      viewport: viewport
+    }
+    await page.render(renderContext).promise
+  } catch (err) {
+    console.error('PDF rendering failed', err)
+  }
+}
+
+async function loadBranding(storeId: string) {
+  brandingLoading.value = true
+  try {
+    brandConfig.value = await configApi.getBrandConfig(storeId)
+    // Apply primary color if present
+    const primaryColor = brandConfig.value['brand.primary_color']
+    if (primaryColor) {
+      document.documentElement.style.setProperty('--el-color-primary', primaryColor)
+    }
+  } catch (e) {
+    console.error('Failed to load branding', e)
+  } finally {
+    brandingLoading.value = false
+  }
+}
 const activeVersion = computed(() => {
   const data = reviewData.value
   if (!data) return null
@@ -36,7 +88,72 @@ const hasConfirmation = computed(() => Boolean(reviewData.value?.confirmation))
 const annotationForm = reactive({
   customerName: '',
   content: '',
+  mediaUrl: '',
+  mediaDuration: 0,
 })
+
+const isRecording = ref(false)
+const recordingTime = ref(0)
+const mediaRecorder = ref<MediaRecorder | null>(null)
+const audioChunks = ref<Blob[]>([])
+let timer: any = null
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    mediaRecorder.value = new MediaRecorder(stream)
+    audioChunks.value = []
+    
+    mediaRecorder.value.ondataavailable = (event) => {
+      audioChunks.value.push(event.data)
+    }
+    
+    mediaRecorder.value.onstop = async () => {
+      const audioBlob = new Blob(audioChunks.value, { type: 'audio/webm' })
+      await uploadVoice(audioBlob)
+      stream.getTracks().forEach(track => track.stop())
+    }
+    
+    mediaRecorder.value.start()
+    isRecording.value = true
+    recordingTime.value = 0
+    timer = setInterval(() => {
+      recordingTime.value++
+    }, 1000)
+  } catch (err) {
+    ElMessage.error('无法启动录音，请检查麦克风权限')
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder.value && isRecording.value) {
+    mediaRecorder.value.stop()
+    isRecording.value = false
+    if (timer) clearInterval(timer)
+  }
+}
+
+async function uploadVoice(blob: Blob) {
+  const file = new File([blob], `voice_${Date.now()}.webm`, { type: 'audio/webm' })
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('fileRole', 'attachment')
+  
+  try {
+    const response = await fetch(`/api/public/reviews/${token.value}/files/upload`, {
+      method: 'POST',
+      body: formData
+    })
+    const result = await response.json()
+    if (result.code === 200) {
+      annotationForm.mediaUrl = result.data.url
+      annotationForm.mediaDuration = recordingTime.value
+      ElMessage.success('语音录制成功')
+    }
+  } catch (err) {
+    ElMessage.error('语音上传失败')
+  }
+}
 
 const confirmationForm = reactive({
   customerName: '',
@@ -56,6 +173,9 @@ async function loadReview() {
     if (reviewData.value.project.customerContact) {
       confirmationForm.customerContact = reviewData.value.project.customerContact
     }
+
+    // Stage 2: Load branding
+    void loadBranding(reviewData.value.project.storeId)
   } catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : '审稿数据加载失败'
   } finally {
@@ -84,7 +204,7 @@ function statusType(status: annotationApi.AnnotationResponse['status']) {
 }
 
 function handlePreviewClick(event: MouseEvent) {
-  if (!isImageVersion.value || hasConfirmation.value) return
+  if (hasConfirmation.value) return
   const target = event.currentTarget as HTMLElement
   const rect = target.getBoundingClientRect()
   selectedPoint.value = {
@@ -116,10 +236,14 @@ async function submitAnnotation() {
       xRatio: selectedPoint.value.xRatio,
       yRatio: selectedPoint.value.yRatio,
       content: annotationForm.content.trim(),
+      mediaUrl: annotationForm.mediaUrl || undefined,
+      mediaDuration: annotationForm.mediaDuration || undefined,
       customerName: annotationForm.customerName.trim() || undefined,
     })
     reviewData.value?.annotations.unshift(created)
     annotationForm.content = ''
+    annotationForm.mediaUrl = ''
+    annotationForm.mediaDuration = 0
     selectedPoint.value = null
     ElMessage.success('修改意见已提交')
   } catch (error: any) {
@@ -151,6 +275,13 @@ async function submitConfirmation() {
   }
 }
 
+watch(activeVersion, async (newVal) => {
+  if (newVal && newVal.fileExt?.toLowerCase() === 'pdf') {
+    await nextTick()
+    void renderPdf()
+  }
+}, { immediate: true })
+
 onMounted(() => {
   void loadReview()
 })
@@ -166,10 +297,17 @@ onMounted(() => {
 
     <template v-else-if="reviewData">
       <header class="review-header">
-        <div>
-          <p class="eyebrow">客户审稿</p>
-          <h1>{{ reviewData.project.name }}</h1>
-          <p>{{ reviewData.project.customerName || '客户' }} · {{ activeVersion?.versionName || '当前版本' }}</p>
+        <div class="header-main">
+          <div class="branding">
+            <img v-if="brandConfig['brand.logo_url']" :src="brandConfig['brand.logo_url']" alt="Logo" class="brand-logo" />
+            <div v-else class="brand-placeholder">
+              <span class="eyebrow">客户审稿</span>
+            </div>
+          </div>
+          <div class="project-info">
+            <h1>{{ reviewData.project.name }}</h1>
+            <p>{{ reviewData.project.customerName || '客户' }} · {{ activeVersion?.versionName || '当前版本' }}</p>
+          </div>
         </div>
         <el-tag v-if="hasConfirmation" type="success" size="large">已确认定稿</el-tag>
       </header>
@@ -192,10 +330,20 @@ onMounted(() => {
                 +
               </span>
             </div>
-            <div v-else-if="activeVersion" class="pdf-state">
-              <el-icon :size="52"><Message /></el-icon>
-              <p>{{ activeVersion.originalFilename }}</p>
-              <el-link :href="activeVersion.previewUrl" target="_blank" type="primary">打开 PDF 文件</el-link>
+            <div v-else-if="activeVersion" class="preview-stage pdf-preview" @click="handlePreviewClick">
+              <canvas ref="pdfCanvasRef"></canvas>
+              <span
+                v-for="(annotation, index) in reviewData.annotations"
+                :key="annotation.id"
+                class="annotation-marker"
+                :class="annotation.status"
+                :style="markerStyle(annotation)"
+              >
+                {{ index + 1 }}
+              </span>
+              <span v-if="selectedPoint" class="annotation-marker drafting" :style="markerStyle(selectedPoint)">
+                +
+              </span>
             </div>
             <div v-else class="pdf-state">
               <el-empty description="暂无可审稿版本" />
@@ -225,7 +373,16 @@ onMounted(() => {
                 <el-form-item label="修改意见" required>
                   <el-input v-model="annotationForm.content" type="textarea" :rows="4" placeholder="请输入需要调整的内容" />
                 </el-form-item>
-                <el-button type="primary" :loading="submittingAnnotation" @click="submitAnnotation">提交意见</el-button>
+                <div class="voice-actions">
+                  <el-button v-if="!isRecording" size="small" @click="startRecording">
+                    录制语音意见
+                  </el-button>
+                  <el-button v-else size="small" type="danger" @click="stopRecording">
+                    正在录音 ({{ recordingTime }}s) - 点击停止
+                  </el-button>
+                  <span v-if="annotationForm.mediaUrl" class="voice-ready">语音已就绪 ({{ annotationForm.mediaDuration }}s)</span>
+                </div>
+                <el-button type="primary" :loading="submittingAnnotation" @click="submitAnnotation" style="margin-top: 12px;">提交意见</el-button>
               </el-form>
             </template>
           </div>
@@ -263,6 +420,9 @@ onMounted(() => {
                   <el-tag :type="statusType(annotation.status)" size="small">{{ statusText(annotation.status) }}</el-tag>
                 </div>
                 <p>{{ annotation.content }}</p>
+                <div v-if="annotation.mediaUrl" class="voice-player">
+                  <audio :src="annotation.mediaUrl" controls style="height: 32px; width: 100%;"></audio>
+                </div>
                 <small>{{ formatTime(annotation.createdAt) }}</small>
               </li>
             </ol>
@@ -296,15 +456,27 @@ onMounted(() => {
 
 .review-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-logo {
+  height: 48px;
+  max-width: 120px;
+  object-fit: contain;
 }
 
 .review-header h1 {
-  margin: 4px 0;
-  font-size: 28px;
+  margin: 0;
+  font-size: 24px;
   font-weight: 700;
 }
 

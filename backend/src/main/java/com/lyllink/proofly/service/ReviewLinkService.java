@@ -36,7 +36,7 @@ public class ReviewLinkService {
     }
 
     /**
-     * List all review links for a project.
+     * 列出项目的所有审稿链接。
      */
     public List<ReviewLinkResponse> listLinks(CurrentUser currentUser, Long projectId) {
         ensureProjectExists(currentUser.storeId(), projectId);
@@ -52,7 +52,7 @@ public class ReviewLinkService {
     }
 
     /**
-     * Generate a new review link for a project.
+     * 为项目生成新的审稿链接。
      */
     @Transactional
     public ReviewLinkResponse generateLink(CurrentUser currentUser, Long projectId, ReviewLinkCreateRequest request) {
@@ -80,13 +80,13 @@ public class ReviewLinkService {
         reviewLinkMapper.insert(entity);
 
         ReviewLinkResponse response = toResponse(entity);
-        response.setToken(token); // Return plain token only once
+        response.setToken(token); // 仅在此时返回明文令牌
         response.setUrl(prooflyProperties.getReviewBaseUrl() + token);
         return response;
     }
 
     /**
-     * Disable a review link.
+     * 禁用审稿链接。
      */
     @Transactional
     public void disableLink(CurrentUser currentUser, Long linkId) {
@@ -98,7 +98,7 @@ public class ReviewLinkService {
     }
 
     /**
-     * Enable a review link.
+     * 启用审稿链接。
      */
     @Transactional
     public void enableLink(CurrentUser currentUser, Long linkId) {
@@ -110,7 +110,7 @@ public class ReviewLinkService {
     }
 
     /**
-     * Delete a review link (logical delete).
+     * 删除审稿链接（逻辑删除）。
      */
     @Transactional
     public void deleteLink(CurrentUser currentUser, Long linkId) {
@@ -122,7 +122,7 @@ public class ReviewLinkService {
     }
 
     /**
-     * Validate a token and return the link entity.
+     * 验证令牌并返回链接实体。
      */
     public ReviewLinkEntity validateToken(String token) {
         String tokenHash = SecurityUtils.sha256(token);
@@ -147,7 +147,7 @@ public class ReviewLinkService {
     }
 
     /**
-     * Record an access.
+     * 记录访问次数。
      */
     @Transactional
     public void incrementAccessCount(Long linkId) {
@@ -198,10 +198,10 @@ public class ReviewLinkService {
         resp.setAccessCount(entity.getAccessCount());
         resp.setLastAccessAt(entity.getLastAccessAt());
         resp.setCreatedAt(entity.getCreatedAt());
-        // URL can't be rebuilt perfectly without the token, which we don't store plain.
-        // For existing links, we might just return a "token prefix" or similar if needed for UI identification,
-        // but typically you just show the list and status.
-        // If the user lost the link, they should generate a new one.
+        // 由于不存储明文令牌，无法完美重建 URL。
+        // 对于现有链接，如果 UI 需要标识，我们可能只返回“令牌前缀”或类似信息，
+        // 但通常只需显示列表和状态。
+        // 如果用户丢失了链接，应重新生成一个。
         return resp;
     }
 }

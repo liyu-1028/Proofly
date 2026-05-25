@@ -24,6 +24,8 @@ public class AnnotationEntity {
     private BigDecimal widthRatio;
     private BigDecimal heightRatio;
     private String content;
+    private String mediaUrl;
+    private Integer mediaDuration;
     private String customerName;
     private String customerContact;
     private String status; // open, resolved, ignored

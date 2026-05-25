@@ -219,6 +219,8 @@ CREATE TABLE IF NOT EXISTS `annotation` (
   `width_ratio` DECIMAL(10,6) NULL COMMENT '宽度相对比例',
   `height_ratio` DECIMAL(10,6) NULL COMMENT '高度相对比例',
   `content` VARCHAR(2000) NOT NULL COMMENT '修改意见',
+  `media_url` VARCHAR(500) NULL COMMENT '语音/媒体文件URL',
+  `media_duration` INT NULL COMMENT '媒体文件时长(秒)',
   `customer_name` VARCHAR(80) NULL COMMENT '客户名称',
   `customer_contact` VARCHAR(120) NULL COMMENT '客户联系方式',
   `status` VARCHAR(32) NOT NULL DEFAULT 'open' COMMENT '标注状态：open, resolved, ignored',
@@ -244,10 +246,27 @@ CREATE TABLE IF NOT EXISTS `annotation_comment` (
   `reply_user_id` BIGINT NULL COMMENT '后台用户 ID',
   `reply_name` VARCHAR(80) NULL COMMENT '回复人名称',
   `content` VARCHAR(2000) NOT NULL COMMENT '回复内容',
+  `media_url` VARCHAR(500) NULL COMMENT '语音/媒体文件URL',
+  `media_duration` INT NULL COMMENT '媒体文件时长(秒)',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
   PRIMARY KEY (`id`),
   KEY `idx_annotation_comment` (`annotation_id`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='标注回复表';
+
+CREATE TABLE IF NOT EXISTS `referral_record` (
+  `id` BIGINT NOT NULL COMMENT '记录 ID',
+  `inviter_store_id` BIGINT NOT NULL COMMENT '邀请人门店 ID',
+  `inviter_user_id` BIGINT NOT NULL COMMENT '邀请人用户 ID',
+  `invitee_store_id` BIGINT NOT NULL COMMENT '受邀人门店 ID',
+  `status` VARCHAR(32) NOT NULL DEFAULT 'pending' COMMENT '状态：pending, rewarded',
+  `rewarded_at` DATETIME(3) NULL COMMENT '发奖时间',
+  `trigger_project_id` BIGINT NULL COMMENT '触发发奖的项目 ID',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_referral_invitee` (`invitee_store_id`),
+  KEY `idx_referral_inviter` (`inviter_store_id`, `status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='推荐奖励记录表';
 
 CREATE TABLE IF NOT EXISTS `confirmation_record` (
   `id` BIGINT NOT NULL COMMENT '确认记录 ID',

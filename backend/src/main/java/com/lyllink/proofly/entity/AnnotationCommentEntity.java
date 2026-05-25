@@ -21,5 +21,7 @@ public class AnnotationCommentEntity {
     private Long replyUserId;
     private String replyName;
     private String content;
+    private String mediaUrl;
+    private Integer mediaDuration;
     private LocalDateTime createdAt;
 }

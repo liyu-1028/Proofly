@@ -13,6 +13,8 @@ public class PublicAnnotationRequest {
     private BigDecimal widthRatio;
     private BigDecimal heightRatio;
     private String content;
+    private String mediaUrl;
+    private Integer mediaDuration;
     private String customerName;
     private String customerContact;
 }

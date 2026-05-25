@@ -32,3 +32,10 @@ export function updateConfig(key: string, payload: SystemConfigUpdateRequest) {
     body: JSON.stringify(payload),
   })
 }
+
+/**
+ * 获取公开品牌配置（Logo, 品牌色等）
+ */
+export function getBrandConfig(storeId: string) {
+  return request<Record<string, string>>(`/public/configs/brand/${storeId}`)
+}

@@ -10,21 +10,27 @@ import com.lyllink.proofly.dto.resp.ProjectVersionResponse;
 import com.lyllink.proofly.dto.resp.PublicProjectReviewResponse;
 import com.lyllink.proofly.entity.AnnotationEntity;
 import com.lyllink.proofly.entity.ConfirmationRecordEntity;
+import com.lyllink.proofly.entity.FileObjectEntity;
 import com.lyllink.proofly.entity.ReviewLinkEntity;
 import com.lyllink.proofly.service.AnnotationService;
 import com.lyllink.proofly.service.ConfirmationService;
+import com.lyllink.proofly.service.FileService;
 import com.lyllink.proofly.service.ProjectService;
 import com.lyllink.proofly.service.ProjectVersionService;
 import com.lyllink.proofly.service.ReviewLinkService;
+import com.lyllink.proofly.service.StorageService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/public/reviews/{token}")
@@ -35,19 +41,49 @@ public class PublicReviewController {
     private final ProjectVersionService projectVersionService;
     private final AnnotationService annotationService;
     private final ConfirmationService confirmationService;
+    private final FileService fileService;
 
     public PublicReviewController(
             ReviewLinkService reviewLinkService,
             ProjectService projectService,
             ProjectVersionService projectVersionService,
             AnnotationService annotationService,
-            ConfirmationService confirmationService
+            ConfirmationService confirmationService,
+            FileService fileService
     ) {
         this.reviewLinkService = reviewLinkService;
         this.projectService = projectService;
         this.projectVersionService = projectVersionService;
         this.annotationService = annotationService;
         this.confirmationService = confirmationService;
+        this.fileService = fileService;
+    }
+
+    @PostMapping("/files/upload")
+    public ApiResponse<Map<String, String>> uploadFile(
+            @PathVariable String token,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "fileRole", defaultValue = "attachment") String fileRole
+    ) throws Exception {
+        ReviewLinkEntity link = reviewLinkService.validateToken(token);
+        
+        FileObjectEntity entity = fileService.uploadPublicFile(
+                link.getStoreId(),
+                link.getProjectId(),
+                link.getCurrentVersionId(),
+                file.getOriginalFilename(),
+                file.getContentType(),
+                file.getSize(),
+                file.getInputStream(),
+                fileRole
+        );
+        
+        String url = fileService.getFilePreviewUrl(entity.getObjectKey());
+        
+        Map<String, String> resp = new java.util.HashMap<>();
+        resp.put("id", entity.getId().toString());
+        resp.put("url", url);
+        return ApiResponse.success(resp);
     }
 
     @GetMapping
@@ -56,13 +92,13 @@ public class PublicReviewController {
         reviewLinkService.incrementAccessCount(link.getId());
 
         PublicProjectReviewResponse resp = new PublicProjectReviewResponse();
-        // Use an internal detail method that doesn't check CurrentUser
+        // 使用不检查 CurrentUser 的内部详情方法
         resp.setProject(projectService.detailInternal(link.getStoreId(), link.getProjectId()));
         resp.setVersions(projectVersionService.listVersionsInternal(link.getStoreId(), link.getProjectId()));
         resp.setActiveVersionId(link.getCurrentVersionId());
         
-        // Get annotations for the specific version (or project?)
-        // Usually, a review link points to a "current" version.
+        // 获取特定版本（或项目？）的标注
+        // 通常，审稿链接指向“当前”版本。
         List<AnnotationResponse> annotations = annotationService.listAnnotations(link.getStoreId(), link.getProjectId(), link.getCurrentVersionId())
                 .stream().map(this::toAnnotationResponse).collect(Collectors.toList());
         resp.setAnnotations(annotations);
@@ -93,6 +129,8 @@ public class PublicReviewController {
         entity.setWidthRatio(request.getWidthRatio());
         entity.setHeightRatio(request.getHeightRatio());
         entity.setContent(request.getContent());
+        entity.setMediaUrl(request.getMediaUrl());
+        entity.setMediaDuration(request.getMediaDuration());
         entity.setCustomerName(request.getCustomerName());
         entity.setCustomerContact(request.getCustomerContact());
 
@@ -129,11 +167,13 @@ public class PublicReviewController {
         resp.setWidthRatio(entity.getWidthRatio());
         resp.setHeightRatio(entity.getHeightRatio());
         resp.setContent(entity.getContent());
+        resp.setMediaUrl(entity.getMediaUrl());
+        resp.setMediaDuration(entity.getMediaDuration());
         resp.setCustomerName(entity.getCustomerName());
         resp.setStatus(entity.getStatus());
         resp.setCreatedAt(entity.getCreatedAt());
         resp.setResolvedAt(entity.getResolvedAt());
-        // resolvedByNickname logic would need userMapper, let's keep it simple for now or fetch later
+        // resolvedByNickname 逻辑需要 userMapper，现在先保持简单，稍后再获取
         return resp;
     }
 

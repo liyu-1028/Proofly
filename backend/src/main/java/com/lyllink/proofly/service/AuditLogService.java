@@ -19,7 +19,7 @@ public class AuditLogService {
     }
 
     /**
-     * Record a business action.
+     * 记录业务操作日志。
      */
     public void log(
             Long storeId,
@@ -48,21 +48,21 @@ public class AuditLogService {
     }
 
     /**
-     * Specialized log for backend users.
+     * 后台用户的专用日志记录。
      */
     public void logUserAction(CurrentUser user, String action, String targetType, Long targetId, String summary) {
         log(user.storeId(), action, targetType, targetId, "user", user.userId(), user.nickname(), summary, null);
     }
 
     /**
-     * Specialized log for customers.
+     * 客户的专用日志记录。
      */
     public void logCustomerAction(Long storeId, String action, String targetType, Long targetId, String customerName, String summary) {
         log(storeId, action, targetType, targetId, "customer", null, customerName, summary, null);
     }
 
     /**
-     * Query timeline for a specific project.
+     * 查询特定项目的时间轴。
      */
     public List<AuditLogEntity> getProjectTimeline(Long storeId, Long projectId) {
         return auditLogMapper.selectList(new LambdaQueryWrapper<AuditLogEntity>()

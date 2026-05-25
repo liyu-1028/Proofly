@@ -21,19 +21,22 @@ public class ConfirmationService {
     private final ProjectVersionMapper projectVersionMapper;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
+    private final ReferralService referralService;
 
     public ConfirmationService(
             ConfirmationRecordMapper confirmationRecordMapper,
             ProjectMapper projectMapper,
             ProjectVersionMapper projectVersionMapper,
             AuditLogService auditLogService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            ReferralService referralService
     ) {
         this.confirmationRecordMapper = confirmationRecordMapper;
         this.projectMapper = projectMapper;
         this.projectVersionMapper = projectVersionMapper;
         this.auditLogService = auditLogService;
         this.notificationService = notificationService;
+        this.referralService = referralService;
     }
 
     /**
@@ -102,6 +105,9 @@ public class ConfirmationService {
                 String.format("客户 [%s] 已正式确认项目 [%s] 的版本 [%s]。", 
                         record.getCustomerName(), project.getName(), version.getVersionName())
         );
+
+        // Stage 2: Trigger referral reward check
+        referralService.checkAndReward(record.getStoreId(), record.getProjectId());
 
         return record;
     }

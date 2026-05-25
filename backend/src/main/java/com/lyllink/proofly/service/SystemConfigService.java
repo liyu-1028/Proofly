@@ -24,20 +24,20 @@ public class SystemConfigService {
     }
 
     /**
-     * List all configs for a store, merged with global defaults.
+     * 列出项目的所有配置，并与全局默认值合并。
      */
     public List<SystemConfigResponse> listMergedConfigs(Long storeId) {
-        // 1. Fetch global configs (store_id IS NULL)
+        // 1. 获取全局配置 (store_id 为空)
         List<SystemConfigEntity> globals = systemConfigMapper.selectList(new LambdaQueryWrapper<SystemConfigEntity>()
                 .isNull(SystemConfigEntity::getStoreId)
                 .eq(SystemConfigEntity::getDeleted, false));
 
-        // 2. Fetch store-specific configs
+        // 2. 获取项目特定的配置
         List<SystemConfigEntity> storeConfigs = systemConfigMapper.selectList(new LambdaQueryWrapper<SystemConfigEntity>()
                 .eq(SystemConfigEntity::getStoreId, storeId)
                 .eq(SystemConfigEntity::getDeleted, false));
 
-        // 3. Merge: store overrides global
+        // 3. 合并：项目配置覆盖全局配置
         Map<String, SystemConfigEntity> mergedMap = new HashMap<>();
         for (SystemConfigEntity g : globals) {
             mergedMap.put(g.getConfigKey(), g);
@@ -52,7 +52,7 @@ public class SystemConfigService {
     }
 
     /**
-     * Update or create a store-specific override for a config key.
+     * 更新或为配置键创建项目特定的覆盖。
      */
     @Transactional
     public SystemConfigResponse updateStoreConfig(Long storeId, String key, SystemConfigUpdateRequest request, Long userId) {
@@ -62,7 +62,7 @@ public class SystemConfigService {
                 .eq(SystemConfigEntity::getDeleted, false));
 
         if (entity == null) {
-            // Find template from global config to get value_type
+            // 从全局配置中查找模板以获取 value_type
             SystemConfigEntity template = systemConfigMapper.selectOne(new LambdaQueryWrapper<SystemConfigEntity>()
                     .isNull(SystemConfigEntity::getStoreId)
                     .eq(SystemConfigEntity::getConfigKey, key)
@@ -93,7 +93,7 @@ public class SystemConfigService {
     }
 
     public String getConfigValue(Long storeId, String key, String defaultValue) {
-        // Try store specific first
+        // 优先尝试项目特定的配置
         SystemConfigEntity entity = systemConfigMapper.selectOne(new LambdaQueryWrapper<SystemConfigEntity>()
                 .eq(SystemConfigEntity::getStoreId, storeId)
                 .eq(SystemConfigEntity::getConfigKey, key)
@@ -103,7 +103,7 @@ public class SystemConfigService {
             return entity.getConfigValue();
         }
 
-        // Try global
+        // 尝试全局配置
         entity = systemConfigMapper.selectOne(new LambdaQueryWrapper<SystemConfigEntity>()
                 .isNull(SystemConfigEntity::getStoreId)
                 .eq(SystemConfigEntity::getConfigKey, key)

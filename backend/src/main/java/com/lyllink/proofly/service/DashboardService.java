@@ -40,7 +40,7 @@ public class DashboardService {
 
         DashboardStatsResponse resp = new DashboardStatsResponse();
 
-        // 1. Project counts by status
+        // 1. 按状态统计项目数量
         List<ProjectEntity> allProjects = projectMapper.selectList(new LambdaQueryWrapper<ProjectEntity>()
                 .eq(ProjectEntity::getStoreId, storeId)
                 .eq(ProjectEntity::getDeleted, false));
@@ -50,20 +50,20 @@ public class DashboardService {
         resp.setStatusCounts(statusCounts);
         resp.setTotalProjects((long) allProjects.size());
 
-        // 2. Recent projects (top 5)
+        // 2. 最近项目 (前5条)
         List<ProjectEntity> recentProjectEntities = projectMapper.selectList(new LambdaQueryWrapper<ProjectEntity>()
                 .eq(ProjectEntity::getStoreId, storeId)
                 .eq(ProjectEntity::getDeleted, false)
                 .orderByDesc(ProjectEntity::getCreatedAt)
                 .last("LIMIT 5"));
 
-        // Fetch nicknames for mapping
+        // 获取用于映射的昵称
         Set<Long> userIds = recentProjectEntities.stream()
                 .flatMap(p -> Stream.of(p.getOwnerUserId(), p.getCreatedBy()))
                 .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        // 3. Recent activities (top 10)
+        // 3. 最近活动 (前10条)
         List<AuditLogEntity> recentAuditEntities = auditLogMapper.selectList(new LambdaQueryWrapper<AuditLogEntity>()
                 .eq(AuditLogEntity::getStoreId, storeId)
                 .orderByDesc(AuditLogEntity::getCreatedAt)
