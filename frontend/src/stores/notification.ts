@@ -1,12 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import SockJS from 'sockjs-client'
+import Stomp from 'stompjs'
 import { getUnreadCount, getNotifications, markAsRead, markAllAsRead } from '@/api/notifications'
 import type { NotificationResponse } from '@/api/notifications'
+import { useSessionStore } from './session'
 
 export const useNotificationStore = defineStore('notification', () => {
   const unreadCount = ref(0)
   const notifications = ref<NotificationResponse[]>([])
   const loading = ref(false)
+  const stompClient = ref<Stomp.Client | null>(null)
 
   const fetchUnreadCount = async () => {
     try {
@@ -22,12 +26,51 @@ export const useNotificationStore = defineStore('notification', () => {
     try {
       const list = await getNotifications()
       notifications.value = list
-      // After listing, we might want to refresh unread count too
       await fetchUnreadCount()
     } catch (e) {
       console.error('Failed to fetch notifications', e)
     } finally {
       loading.value = false
+    }
+  }
+
+  const connectWebSocket = () => {
+    const sessionStore = useSessionStore()
+    if (!sessionStore.user?.id || stompClient.value?.connected) return
+
+    // 在本地开发中，后端通常运行在 8080 端口，或与前端代理相同的端口
+    // 假设已配置 Vite 代理或使用相对路径
+    const socket = new SockJS('/ws-notifications')
+    stompClient.value = Stomp.over(socket)
+    
+    // 禁用调试日志以使控制台更整洁
+    stompClient.value.debug = () => {}
+
+    stompClient.value.connect({}, () => {
+      console.log('WebSocket Connected')
+      
+      // 订阅个人通知队列
+      stompClient.value?.subscribe(`/user/${sessionStore.user?.id}/queue/notifications`, (message) => {
+        const notification: NotificationResponse = JSON.parse(message.body)
+        // 添加到列表并增加计数
+        notifications.value.unshift(notification)
+        unreadCount.value++
+        
+        // 可选：触发浏览器通知或消息提示
+      })
+    }, (error) => {
+      console.error('WebSocket Error:', error)
+      // 5 秒后尝试重新连接
+      setTimeout(connectWebSocket, 5000)
+    })
+  }
+
+  const disconnectWebSocket = () => {
+    if (stompClient.value) {
+      stompClient.value.disconnect(() => {
+        console.log('WebSocket Disconnected')
+      })
+      stompClient.value = null
     }
   }
 
@@ -62,6 +105,8 @@ export const useNotificationStore = defineStore('notification', () => {
     loading,
     fetchUnreadCount,
     fetchNotifications,
+    connectWebSocket,
+    disconnectWebSocket,
     readOne,
     readAll
   }

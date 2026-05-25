@@ -6,7 +6,6 @@ export interface StoreResponse {
   contactName: string
   contactPhone: string
   status: 'active' | 'disabled'
-  deploymentMode: string
   planType: 'free' | 'pro'
   planExpiresAt?: string
   inviteCode?: string

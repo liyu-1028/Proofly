@@ -38,7 +38,7 @@ const fetchStoreAndConfigs = async () => {
     }
     configs.value = configData
     
-    // Extract branding info
+    // 提取品牌信息
     brandForm.value.logoUrl = configData.find(c => c.configKey === 'brand.logo_url')?.configValue || ''
     brandForm.value.primaryColor = configData.find(c => c.configKey === 'brand.primary_color')?.configValue || '#2a9d8f'
   } catch (error: any) {
@@ -135,9 +135,6 @@ onMounted(() => {
           <el-tag :type="store?.status === 'active' ? 'success' : 'danger'">
             {{ store?.status === 'active' ? '正常' : '禁用' }}
           </el-tag>
-        </el-form-item>
-        <el-form-item label="部署模式">
-          <el-tag type="info">{{ store?.deploymentMode }}</el-tag>
         </el-form-item>
         <el-form-item label="当前套餐">
           <el-tag :type="store?.planType === 'pro' ? 'warning' : 'info'">

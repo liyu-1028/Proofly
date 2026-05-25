@@ -23,12 +23,12 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   
   const headers = new Headers(initHeaders)
   
-  // Only set application/json if body is not FormData and no Content-Type is provided
+  // 如果 body 不是 FormData 且未提供 Content-Type，则设置为 application/json
   if (!(body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
 
-  // Inject Authorization header if token exists
+  // 如果存在 token，则注入 Authorization 请求头
   const token = localStorage.getItem('proofly_access_token')
   if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`)

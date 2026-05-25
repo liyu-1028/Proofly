@@ -10,7 +10,5 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "proofly")
 public class ProoflyProperties {
-    private String deploymentMode = "single-store";
-    private Long defaultStoreId;
     private String reviewBaseUrl = "http://localhost:5173/review/";
 }

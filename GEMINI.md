@@ -67,12 +67,14 @@ docker compose -f docker/docker-compose.dev.yml up -d
 - **API Response**: Always use `ApiResponse<T>` wrapper.
 - **Validation**: Use `@Valid` and JSR-303 annotations in DTOs.
 - **Immutability**: Design versions and confirmation records should never be physically deleted or overwritten. Use logical flags or audit trails.
+- **Comments**: All code comments MUST be in Chinese.
 
 ### Frontend
 - **API Client**: Centralized in `src/api/`. Use the `request<T>` utility in `src/api/http.ts`.
 - **Types**: Define interfaces for API responses and business entities in `src/types/`.
 - **State Management**: Use Pinia stores (e.g., `src/stores/session.ts`).
 - **Styling**: Prefer clean, functional layouts for professional use.
+- **Comments**: All code comments MUST be in Chinese.
 
 ### Documentation
 - **API Specs**: Update or create `docs/api-mXX-{module}.md` for every new or modified API.

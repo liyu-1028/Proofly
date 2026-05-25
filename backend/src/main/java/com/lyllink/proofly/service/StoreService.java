@@ -57,7 +57,6 @@ public class StoreService {
                 store.getContactName(),
                 store.getContactPhone(),
                 store.getStatus(),
-                store.getDeploymentMode(),
                 store.getPlanType(),
                 store.getPlanExpiresAt(),
                 store.getInviteCode(),

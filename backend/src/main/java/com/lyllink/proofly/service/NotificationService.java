@@ -8,6 +8,7 @@ import com.lyllink.proofly.dto.resp.NotificationResponse;
 import com.lyllink.proofly.entity.NotificationEntity;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,9 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
 
     private final NotificationMapper notificationMapper;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public NotificationService(NotificationMapper notificationMapper) {
+    public NotificationService(NotificationMapper notificationMapper, SimpMessagingTemplate messagingTemplate) {
         this.notificationMapper = notificationMapper;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Transactional
@@ -34,6 +37,21 @@ public class NotificationService {
         entity.setUpdatedAt(LocalDateTime.now());
         entity.setDeleted(false);
         notificationMapper.insert(entity);
+
+        // 通过 WebSocket 推送实时通知
+        pushNotification(receiverId, toResponse(entity));
+    }
+
+    /**
+     * 推送通知到指定用户
+     */
+    private void pushNotification(Long userId, NotificationResponse notification) {
+        // 推送到 /user/{userId}/queue/notifications
+        messagingTemplate.convertAndSendToUser(
+                userId.toString(),
+                "/queue/notifications",
+                notification
+        );
     }
 
     public List<NotificationResponse> list(Long storeId, Long receiverId) {

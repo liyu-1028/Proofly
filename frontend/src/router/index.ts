@@ -105,7 +105,7 @@ router.beforeEach(async (to) => {
     }
   }
 
-  // Role check
+  // 角色检查
   if (to.meta.requiredRoles) {
     const roles = to.meta.requiredRoles as string[]
     const hasRole = session.user?.roles.some((role) => roles.includes(role))

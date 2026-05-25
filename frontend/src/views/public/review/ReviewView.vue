@@ -11,8 +11,8 @@ import * as publicReviewApi from '@/api/public-review'
 import * as configApi from '@/api/configs'
 import * as pdfjsLib from 'pdfjs-dist'
 
-// Set worker path (usually needs to be copied to public or linked)
-// For local dev, we might need a specific URL. 
+// 设置 worker 路径（通常需要复制到 public 目录或进行链接）
+// 对于本地开发，可能需要特定的 URL。
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
 
 const route = useRoute()
@@ -36,7 +36,7 @@ async function renderPdf() {
   try {
     const loadingTask = pdfjsLib.getDocument(activeVersion.value.previewUrl)
     const pdf = await loadingTask.promise
-    const page = await pdf.getPage(1) // Just render page 1 for MVP
+    const page = await pdf.getPage(1) // MVP 版本仅渲染第 1 页
     
     const viewport = page.getViewport({ scale: 1.5 })
     const canvas = pdfCanvasRef.value
@@ -60,7 +60,7 @@ async function loadBranding(storeId: string) {
   brandingLoading.value = true
   try {
     brandConfig.value = await configApi.getBrandConfig(storeId)
-    // Apply primary color if present
+    // 如果存在，应用品牌主色调
     const primaryColor = brandConfig.value['brand.primary_color']
     if (primaryColor) {
       document.documentElement.style.setProperty('--el-color-primary', primaryColor)
@@ -174,7 +174,7 @@ async function loadReview() {
       confirmationForm.customerContact = reviewData.value.project.customerContact
     }
 
-    // Stage 2: Load branding
+    // 第 2 阶段：加载品牌配置
     void loadBranding(reviewData.value.project.storeId)
   } catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : '审稿数据加载失败'

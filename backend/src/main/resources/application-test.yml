@@ -16,8 +16,6 @@ minio:
   bucket: ${MINIO_BUCKET:proofly-test}
 
 proofly:
-  deployment-mode: single-store
-  default-store-id: test-store
   auth:
     jwt-secret: proofly-test-jwt-secret-must-be-at-least-32-bytes
     access-token-ttl-minutes: 120

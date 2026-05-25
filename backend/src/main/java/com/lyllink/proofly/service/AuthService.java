@@ -74,7 +74,6 @@ public class AuthService {
         store.setId(storeId);
         store.setName(request.getStoreName().trim());
         store.setStatus(ACTIVE);
-        store.setDeploymentMode("multi-tenant");
         store.setPlanType("free");
         store.setInviteCode(generateInviteCode());
         store.setCreatedAt(LocalDateTime.now());

@@ -19,6 +19,9 @@ export default defineConfig({
       dts: 'src/components.d.ts',
     }),
   ],
+  define: {
+    global: 'window',
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -30,6 +33,11 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8080',
+        changeOrigin: true,
+      },
+      '/ws-notifications': {
+        target: 'http://127.0.0.1:8080',
+        ws: true,
         changeOrigin: true,
       },
     },

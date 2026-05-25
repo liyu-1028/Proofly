@@ -24,6 +24,7 @@ async function handleLogout() {
 onMounted(() => {
   if (session.isLoggedIn) {
     notificationStore.fetchUnreadCount()
+    notificationStore.connectWebSocket()
   }
 })
 </script>
@@ -46,10 +47,6 @@ onMounted(() => {
         <RouterLink to="/admin/projects">审稿项目</RouterLink>
         <RouterLink v-if="session.canManageStaff" to="/admin/staff">员工管理</RouterLink>
         <RouterLink to="/admin/referral">推荐奖励</RouterLink>
-        <a href="javascript:;" class="nav-item-notification" @click="showNotifications = true">
-          通知中心
-          <el-badge v-if="notificationStore.unreadCount > 0" :value="notificationStore.unreadCount" :max="99" class="unread-badge" />
-        </a>
         <RouterLink to="/admin/settings">系统设置</RouterLink>
       </nav>
 

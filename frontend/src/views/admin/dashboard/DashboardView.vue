@@ -17,6 +17,11 @@ import {
 
 import { getDashboardStats, type AuditLogResponse, type DashboardStatsResponse } from '@/api/dashboard'
 import type { ProjectResponse, ProjectStatus } from '@/types/project'
+import { useNotificationStore } from '@/stores/notification'
+import NotificationCenter from '@/components/NotificationCenter.vue'
+
+const notificationStore = useNotificationStore()
+const showNotifications = ref(false)
 
 const statusLabels: Record<ProjectStatus, string> = {
   draft: '草稿',
@@ -168,6 +173,11 @@ onMounted(() => {
         <p>集中查看项目状态、客户反馈、确认进度和最新动态，少翻页面，多做判断。</p>
       </div>
       <div class="hero-actions">
+        <button class="icon-button notification-trigger" type="button" @click="showNotifications = true">
+          <el-badge :value="notificationStore.unreadCount" :max="99" :hidden="notificationStore.unreadCount === 0">
+            <el-icon><Bell /></el-icon>
+          </el-badge>
+        </button>
         <button class="icon-button" type="button" aria-label="刷新工作台" @click="loadStats">
           <el-icon><Refresh /></el-icon>
         </button>
@@ -177,6 +187,8 @@ onMounted(() => {
         </RouterLink>
       </div>
     </header>
+
+    <NotificationCenter v-model:visible="showNotifications" />
 
     <div class="summary-strip">
       <div>
@@ -391,6 +403,18 @@ onMounted(() => {
   border: 1px solid #d9e4ee;
   background: #ffffff;
   color: #14796d;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-button:hover {
+  background: #f5f7fa;
+  border-color: #14796d;
+}
+
+.notification-trigger :deep(.el-badge__content) {
+  top: 5px;
+  right: 5px;
 }
 
 .primary-link {

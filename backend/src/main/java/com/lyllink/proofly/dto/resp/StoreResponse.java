@@ -8,7 +8,6 @@ public record StoreResponse(
         String contactName,
         String contactPhone,
         String status,
-        String deploymentMode,
         String planType,
         LocalDateTime planExpiresAt,
         String inviteCode,

@@ -21,10 +21,10 @@ CREATE TABLE IF NOT EXISTS `store` (
   `id` BIGINT NOT NULL COMMENT '门店 ID',
   `name` VARCHAR(100) NOT NULL COMMENT '门店名称',
   `contact_name` VARCHAR(50) NULL COMMENT '联系人',
-  `contact_phone` VARCHAR(30) NULL COMMENT '联系电话',
+  `contact_phone` VARCHAR(20) NULL COMMENT '联系电话',
   `status` VARCHAR(32) NOT NULL DEFAULT 'active' COMMENT '门店状态：active, disabled',
-  `deployment_mode` VARCHAR(32) NOT NULL DEFAULT 'single-store' COMMENT '部署模式：single-store, multi-tenant',
   `plan_type` VARCHAR(32) NOT NULL DEFAULT 'free' COMMENT '套餐类型：free, pro',
+
   `plan_expires_at` DATETIME(3) NULL COMMENT '套餐过期时间',
   `invite_code` VARCHAR(32) NULL COMMENT '门店专属邀请码',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
