@@ -12,7 +12,7 @@ This document provides essential context and guidelines for developing the Proof
 
 ### Architecture
 - **Monorepo**: Root contains `backend/` and `frontend/`.
-- **Multi-Tenancy**: Every entity must include a `store_id`. Systems should support both `single-store` and `multi-tenant` modes via configuration.
+- **Multi-Tenancy**: Every entity must include a `store_id`. Systems must ensure strict data isolation based on `store_id` in a native SaaS architecture.
 - **Backend Layers**: `Controller -> Service -> DAO -> MySQL`.
 - **Frontend**: Vue 3 with Composition API and TypeScript.
 

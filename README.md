@@ -186,20 +186,15 @@ minio:
   bucket: ${MINIO_BUCKET:proofly}
 
 proofly:
-  deployment-mode: ${PROOFLY_DEPLOYMENT_MODE:single-store}
-  default-store-id: ${PROOFLY_DEFAULT_STORE_ID:}
-```
+  auth:
+    jwt-secret: ${PROOFLY_AUTH_JWT_SECRET:proofly-local-dev-jwt-secret-must-be-at-least-32-bytes}
+    access-token-ttl-minutes: ${PROOFLY_AUTH_ACCESS_TOKEN_TTL_MINUTES:120}
+    refresh-token-ttl-days: ${PROOFLY_AUTH_REFRESH_TOKEN_TTL_DAYS:7}
+    redis-prefix: ${PROOFLY_AUTH_REDIS_PREFIX:proofly}
 
-### 多门店部署预留
+### 原生 SaaS 多租户支持
 
-审稿宝后续可能部署到多家打印店或设计室，开发阶段需要预留两种模式：
-
-| 模式 | 说明 |
-| --- | --- |
-| `single-store` | 单店私有部署，一家门店独立使用一套系统 |
-| `multi-tenant` | 平台化部署，多家门店共用一套系统 |
-
-从第一版数据模型开始，核心业务表建议包含 `store_id`：
+从第一版数据模型开始，核心业务表严格包含 `store_id`，以支持原生 SaaS 架构：
 
 - `user`
 - `project`
@@ -208,7 +203,8 @@ proofly:
 - `confirmation_record`
 - `file_object`
 
-即使 MVP 阶段只服务一家店，也不要省略 `store_id`。这样后续扩展到多门店、连锁店或 SaaS 平台时，不需要大规模重构数据结构。
+所有业务逻辑均基于 `store_id` 进行数据隔离，确保平台租户安全。
+
 
 ## 推荐目录结构
 
@@ -222,6 +218,7 @@ Proofly/
 ├── AGENT.md        # Codex 开发协作规范
 └── README.md       # 项目说明文档
 ```
+
 
 ## 本地开发
 

@@ -350,7 +350,6 @@ INSERT INTO `store` (
   `contact_name`,
   `contact_phone`,
   `status`,
-  `deployment_mode`,
   `created_at`,
   `updated_at`,
   `deleted`
@@ -360,14 +359,12 @@ INSERT INTO `store` (
   '管理员',
   '13800000000',
   'active',
-  'single-store',
   CURRENT_TIMESTAMP(3),
   CURRENT_TIMESTAMP(3),
   0
 ) ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `status` = VALUES(`status`),
-  `deployment_mode` = VALUES(`deployment_mode`),
   `updated_at` = CURRENT_TIMESTAMP(3),
   `deleted` = 0;
 

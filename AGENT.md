@@ -1,6 +1,7 @@
-# AGENT.md
+# Codex 开发协作规范 (AGENT.md)
 
-本文档是 Codex 在 `Proofly` 项目中进行全栈开发时的协作规范。任何开发任务开始前，先阅读 `README.md` 和本文档，再检查当前目录结构与已有实现。
+本文档是 Codex 在 `Proofly` 项目中进行全栈开发时的协作规范。
+任何开发任务开始前，先阅读 `README.md` 和本文档，再检查当前目录结构与已有实现。
 
 ## 项目目标
 
@@ -125,22 +126,15 @@ AI 相关依赖不要在 MVP 基线中提前强行加入。只有在实现智能
 - `application-dev.yml` 面向本地开发，默认连接 Docker Compose 中的 MySQL、Redis、MinIO。
 - `application-test.yml` 面向自动化测试。
 - `application-prod.yml` 面向真实部署，不提交真实密钥。
-- 数据库、Redis、MinIO、JWT、文件访问域名、部署模式等都必须支持环境变量覆盖。
+- 数据库、Redis、MinIO、JWT、文件访问域名等都必须支持环境变量覆盖。
 
 配置命名建议：
 
 ```yaml
 proofly:
-  deployment-mode: ${PROOFLY_DEPLOYMENT_MODE:single-store}
-  default-store-id: ${PROOFLY_DEFAULT_STORE_ID:}
+  auth:
+    jwt-secret: ${PROOFLY_AUTH_JWT_SECRET}
 ```
-
-`deployment-mode` 预留两种值：
-
-| 值 | 用途 |
-| --- | --- |
-| `single-store` | 单家打印店或设计室私有部署 |
-| `multi-tenant` | 多门店共用一套平台服务 |
 
 ### 数据与业务规则
 

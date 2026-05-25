@@ -64,7 +64,6 @@
 | `contact_name` | `VARCHAR(50)` | 否 | 联系人 |
 | `contact_phone` | `VARCHAR(30)` | 否 | 联系电话 |
 | `status` | `VARCHAR(32)` | 是 | 门店状态 |
-| `deployment_mode` | `VARCHAR(32)` | 是 | 部署模式 |
 | `plan_type` | `VARCHAR(32)` | 是 | 套餐类型：`free`, `pro` |
 | `plan_expires_at` | `DATETIME(3)` | 否 | 套餐过期时间 |
 | `invite_code` | `VARCHAR(32)` | 否 | 门店专属邀请码 |
@@ -80,13 +79,6 @@
 | --- | --- |
 | `active` | 正常 |
 | `disabled` | 停用 |
-
-部署模式：
-
-| 值 | 说明 |
-| --- | --- |
-| `single-store` | 单店部署 |
-| `multi-tenant` | 多门店平台部署 |
 
 建议索引：
 
