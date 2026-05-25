@@ -48,12 +48,14 @@ const totalProjects = computed(() => stats.value?.totalProjects ?? 0)
 const waitingFeedback = computed(() => stats.value?.statusCounts?.waiting_feedback ?? 0)
 const changeRequested = computed(() => stats.value?.statusCounts?.change_requested ?? 0)
 const waitingConfirm = computed(() => stats.value?.statusCounts?.waiting_confirm ?? 0)
-const confirmed = computed(() => stats.value?.statusCounts?.confirmed ?? 0)
-const draft = computed(() => stats.value?.statusCounts?.draft ?? 0)
+const confirmed = computed(() => Number(stats.value?.statusCounts?.confirmed ?? 0))
+const draft = computed(() => Number(stats.value?.statusCounts?.draft ?? 0))
 const urgentCount = computed(() => changeRequested.value + waitingConfirm.value)
 const completionRate = computed(() => {
-  if (totalProjects.value === 0) return 0
-  return Math.round((confirmed.value / totalProjects.value) * 100)
+  const total = totalProjects.value
+  const done = confirmed.value
+  if (!total || total <= 0) return 0
+  return Math.round((done / total) * 100)
 })
 
 const metricCards = computed(() => [
