@@ -12,14 +12,23 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lyllink.proofly.config.AuthProperties;
+
 @RestController
 @RequestMapping("/api/public/configs")
 public class PublicConfigController {
 
     private final SystemConfigService systemConfigService;
+    private final AuthProperties authProperties;
 
-    public PublicConfigController(SystemConfigService systemConfigService) {
+    public PublicConfigController(SystemConfigService systemConfigService, AuthProperties authProperties) {
         this.systemConfigService = systemConfigService;
+        this.authProperties = authProperties;
+    }
+
+    @GetMapping("/rsa-public-key")
+    public ApiResponse<String> getRsaPublicKey() {
+        return ApiResponse.success(authProperties.rsa().publicKey());
     }
 
     @GetMapping("/brand/{storeId}")

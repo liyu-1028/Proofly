@@ -39,3 +39,10 @@ export function updateConfig(key: string, payload: SystemConfigUpdateRequest) {
 export function getBrandConfig(storeId: string) {
   return request<Record<string, string>>(`/public/configs/brand/${storeId}`)
 }
+
+/**
+ * 获取 RSA 公钥用于加密传输敏感信息
+ */
+export function getRsaPublicKey() {
+  return request<string>('/public/configs/rsa-public-key')
+}

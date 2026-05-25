@@ -229,8 +229,8 @@ public class ProjectService {
             throw BusinessException.badRequest("负责人不存在、不属于该门店或已停用");
         }
         List<String> roles = roleMapper.selectRoleCodesByUserId(storeId, userId);
-        if (!roles.contains("designer")) {
-            throw BusinessException.badRequest("项目负责人必须是设计师");
+        if (!roles.contains("designer") && !roles.contains("owner")) {
+            throw BusinessException.badRequest("项目负责人必须是设计师或店长");
         }
     }
 

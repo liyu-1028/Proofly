@@ -30,6 +30,9 @@ import com.lyllink.proofly.entity.RoleEntity;
 import com.lyllink.proofly.entity.UserRoleEntity;
 import java.util.UUID;
 
+import com.lyllink.proofly.utils.RsaUtils;
+import com.lyllink.proofly.config.AuthProperties;
+
 @Service
 public class AuthService {
 
@@ -42,6 +45,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final ReferralService referralService;
+    private final AuthProperties authProperties;
 
     public AuthService(
             UserMapper userMapper,
@@ -50,7 +54,8 @@ public class AuthService {
             StoreMapper storeMapper,
             PasswordEncoder passwordEncoder,
             TokenService tokenService,
-            ReferralService referralService
+            ReferralService referralService,
+            AuthProperties authProperties
     ) {
         this.userMapper = userMapper;
         this.roleMapper = roleMapper;
@@ -59,6 +64,7 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
         this.referralService = referralService;
+        this.authProperties = authProperties;
     }
 
     @Transactional
@@ -94,7 +100,16 @@ public class AuthService {
         user.setUsername(request.getPhone()); // 自助注册使用手机号作为用户名
         user.setNickname(request.getNickname().trim());
         user.setPhone(request.getPhone());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+
+        // RSA 解密
+        String plaintextPassword;
+        try {
+            plaintextPassword = RsaUtils.decrypt(request.getPassword(), authProperties.rsa().privateKey());
+        } catch (Exception e) {
+            throw BusinessException.badRequest("密码解析失败");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(plaintextPassword));
         user.setStatus(ACTIVE);
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
@@ -141,7 +156,16 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         UserEntity user = findLoginUser(request.account());
         validateUserAndStore(user);
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        
+        // RSA 解密前端传来的加密密码
+        String plaintextPassword;
+        try {
+            plaintextPassword = RsaUtils.decrypt(request.password(), authProperties.rsa().privateKey());
+        } catch (Exception e) {
+            throw BusinessException.unauthorized("密码解析失败");
+        }
+
+        if (!passwordEncoder.matches(plaintextPassword, user.getPasswordHash())) {
             throw BusinessException.unauthorized("账号或密码错误");
         }
 

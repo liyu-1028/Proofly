@@ -2,7 +2,10 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import JSEncrypt from 'jsencrypt'
+
 import { register } from '@/api/auth'
+import { getRsaPublicKey } from '@/api/configs'
 import prooflyLogo from '@/assets/proofly-logo.svg'
 
 const router = useRouter()
@@ -31,9 +34,22 @@ const handleRegister = async () => {
 
   loading.value = true
   try {
+    // 1. 获取 RSA 公钥
+    const publicKey = await getRsaPublicKey()
+    
+    // 2. 加密密码
+    const encrypt = new JSEncrypt()
+    encrypt.setPublicKey(publicKey)
+    const encryptedPassword = encrypt.encrypt(form.password)
+    
+    if (!encryptedPassword) {
+      throw new Error('加密失败')
+    }
+
+    // 3. 提交注册
     await register({
       phone: form.phone,
-      password: form.password,
+      password: encryptedPassword,
       nickname: form.nickname,
       storeName: form.storeName,
       inviteCode: form.inviteCode || undefined

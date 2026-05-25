@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { View, Hide } from '@element-plus/icons-vue'
+import JSEncrypt from 'jsencrypt'
 
 import { ApiError } from '@/api/http'
 import { useSessionStore } from '@/stores/session'
+import { getRsaPublicKey } from '@/api/configs'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,6 +18,7 @@ const form = reactive({
 })
 
 const submitting = ref(false)
+const passwordVisible = ref(false)
 const errorMessage = ref('')
 
 const canSubmit = computed(() => form.account.trim().length > 0 && form.password.trim().length > 0 && !submitting.value)
@@ -29,14 +33,27 @@ async function handleSubmit() {
   errorMessage.value = ''
 
   try {
+    // 1. 获取 RSA 公钥
+    const publicKey = await getRsaPublicKey()
+    
+    // 2. 加密密码
+    const encrypt = new JSEncrypt()
+    encrypt.setPublicKey(publicKey)
+    const encryptedPassword = encrypt.encrypt(form.password)
+    
+    if (!encryptedPassword) {
+      throw new Error('加密失败')
+    }
+
+    // 3. 提交登录
     await session.login({
       account: form.account.trim(),
-      password: form.password,
+      password: encryptedPassword,
     })
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/admin/dashboard'
     await router.replace(redirect)
-  } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : '登录失败，请稍后重试'
+  } catch (error: any) {
+    errorMessage.value = error instanceof ApiError ? error.message : (error.message || '登录失败，请稍后重试')
   } finally {
     submitting.value = false
   }
@@ -67,7 +84,22 @@ async function handleSubmit() {
 
         <label class="field">
           <span>密码</span>
-          <input v-model="form.password" autocomplete="current-password" placeholder="请输入密码" type="password" />
+          <div class="password-input-wrapper">
+            <input 
+              v-model="form.password" 
+              autocomplete="current-password" 
+              placeholder="请输入密码" 
+              :type="passwordVisible ? 'text' : 'password'" 
+            />
+            <button 
+              type="button" 
+              class="visibility-toggle" 
+              @click="passwordVisible = !passwordVisible"
+              tabindex="-1"
+            >
+              <el-icon><component :is="passwordVisible ? Hide : View" /></el-icon>
+            </button>
+          </div>
         </label>
 
         <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
@@ -95,5 +127,34 @@ async function handleSubmit() {
   color: #2a9d8f;
   text-decoration: none;
   font-weight: 500;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  flex: 1;
+  padding-right: 40px !important;
+}
+
+.visibility-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.visibility-toggle:hover {
+  color: #666;
 }
 </style>

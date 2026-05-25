@@ -11,6 +11,11 @@ public record AuthProperties(
         @NotBlank String jwtSecret,
         @Min(1) long accessTokenTtlMinutes,
         @Min(1) long refreshTokenTtlDays,
-        @NotBlank String redisPrefix
+        @NotBlank String redisPrefix,
+        Rsa rsa
 ) {
+    public record Rsa(
+            @NotBlank String publicKey,
+            @NotBlank String privateKey
+    ) {}
 }
