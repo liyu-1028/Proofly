@@ -18,6 +18,8 @@ export interface ProjectVersionResponse {
   createdAt: string
   uploadedBy: string
   uploaderNickname: string
+  annotationCount?: number
+  hasVoice?: boolean
 }
 
 /**

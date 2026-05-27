@@ -11,6 +11,8 @@ export interface AnnotationResponse {
   widthRatio?: number | null
   heightRatio?: number | null
   content: string
+  mediaUrl?: string | null
+  mediaDuration?: number | null
   customerName?: string | null
   status: AnnotationStatus
   createdAt: string
@@ -25,6 +27,8 @@ export interface PublicAnnotationPayload {
   widthRatio?: number
   heightRatio?: number
   content: string
+  mediaUrl?: string
+  mediaDuration?: number
   customerName?: string
   customerContact?: string
 }

@@ -2,11 +2,12 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ChatLineRound, CircleCheck, Clock, Files, Upload, View } from '@element-plus/icons-vue'
+import { ChatLineRound, CircleCheck, Clock, Files, Microphone, Upload, View } from '@element-plus/icons-vue'
 
 import * as annotationApi from '@/api/annotations'
 import * as auditApi from '@/api/audit'
 import * as confirmationApi from '@/api/confirmations'
+import * as configApi from '@/api/configs'
 import { ApiError } from '@/api/http'
 import * as projectApi from '@/api/projects'
 import * as reviewLinkApi from '@/api/review-links'
@@ -43,6 +44,7 @@ const loadingAnnotations = ref(false)
 const errorMessage = ref('')
 const editMode = ref(false)
 const latestCreatedLink = ref<reviewLinkApi.ReviewLinkResponse | null>(null)
+const maxFileSizeStr = ref('25MB')
 
 const projectId = computed(() => String(route.params.projectId))
 const designerUsers = computed(() => users.value.filter((user: UserResponse) => user.roles.includes('designer') || user.roles.includes('owner')))
@@ -179,6 +181,23 @@ async function archiveOrRestore() {
 
 async function handleUpload(options: any) {
   if (!project.value) return
+
+  // 解析 25MB -> bytes
+  const match = maxFileSizeStr.value.match(/^(\d+)([a-zA-Z]+)$/)
+  let maxSizeInBytes = 25 * 1024 * 1024
+  if (match) {
+    const value = parseInt(match[1])
+    const unit = match[2].toUpperCase()
+    if (unit === 'KB') maxSizeInBytes = value * 1024
+    else if (unit === 'MB') maxSizeInBytes = value * 1024 * 1024
+    else if (unit === 'GB') maxSizeInBytes = value * 1024 * 1024 * 1024
+  }
+
+  if (options.file.size > maxSizeInBytes) {
+    ElMessage.error(`文件太大了，请上传小于 ${maxFileSizeStr.value} 的文件`)
+    return
+  }
+
   uploading.value = true
   try {
     const newVersion = await versionApi.uploadVersion(projectId.value, options.file)
@@ -334,12 +353,22 @@ async function removeReviewLink(link: reviewLinkApi.ReviewLinkResponse) {
   }
 }
 
+function playVoice(url: string) {
+  const audio = new Audio(url)
+  audio.play().catch((err) => {
+    ElMessage.error('无法播放语音：' + err.message)
+  })
+}
+
 onMounted(() => {
   if (!projectId.value || projectId.value === 'undefined') {
     router.replace('/admin/projects')
     return
   }
   void loadData()
+  void configApi.getUploadLimits().then(res => {
+    maxFileSizeStr.value = res.maxFileSize
+  })
 })
 
 watch(
@@ -431,7 +460,17 @@ watch(
                   <el-tag :type="row.isCurrent ? 'success' : 'info'" size="small">{{ row.versionName }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="originalFilename" label="文件名" min-width="200" show-overflow-tooltip />
+              <el-table-column prop="originalFilename" label="文件名" min-width="180" show-overflow-tooltip />
+              <el-table-column label="反馈" width="100">
+                <template #default="{ row }">
+                  <div class="version-feedback">
+                    <el-badge v-if="row.annotationCount > 0" :value="row.annotationCount" class="badge-item" type="warning">
+                      <el-icon :size="16" title="修改意见"><ChatLineRound /></el-icon>
+                    </el-badge>
+                    <el-icon v-if="row.hasVoice" :size="16" class="voice-icon" title="含语音意见"><Microphone /></el-icon>
+                  </div>
+                </template>
+              </el-table-column>
               <el-table-column prop="fileSize" label="大小" width="100">
                 <template #default="{ row }">{{ formatSize(row.fileSize) }}</template>
               </el-table-column>
@@ -505,7 +544,12 @@ watch(
                     {{ annotationStatusText(annotation.status) }}
                   </el-tag>
                 </div>
-                <p>{{ annotation.content }}</p>
+                <p v-if="annotation.content">{{ annotation.content }}</p>
+                <div v-if="annotation.mediaUrl" class="voice-player">
+                  <el-button size="small" :icon="Microphone" @click="playVoice(annotation.mediaUrl)">
+                    语音意见 {{ annotation.mediaDuration ? annotation.mediaDuration + '"' : '' }}
+                  </el-button>
+                </div>
                 <small>{{ formatTime(annotation.createdAt) }}</small>
                 <div v-if="annotation.status === 'open'" class="annotation-actions">
                   <el-button size="small" type="primary" link @click="updateAnnotationStatus(annotation, 'resolved')">
@@ -653,15 +697,17 @@ watch(
 
 .project-layout {
   display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
 }
 
 .panel {
   background: #fff;
   border-radius: 8px;
-  padding: 20px;
+  padding: 16px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
 .section-header {
@@ -734,6 +780,16 @@ watch(
 
 .list-panel {
   margin-top: 24px;
+}
+
+.version-feedback {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.voice-icon {
+  color: #f59e0b;
 }
 
 .info-list dt {
@@ -816,6 +872,10 @@ watch(
   line-height: 1.5;
 }
 
+.voice-player {
+  margin: 8px 0;
+}
+
 .annotation-actions {
   margin-top: 8px;
 }
@@ -880,6 +940,12 @@ watch(
   background: #fff;
   padding: 40px;
   border-radius: 8px;
+}
+
+@media (max-width: 1280px) {
+  .project-layout {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
 }
 
 @media (max-width: 1024px) {

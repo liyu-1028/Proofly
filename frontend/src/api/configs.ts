@@ -41,6 +41,13 @@ export function getBrandConfig(storeId: string) {
 }
 
 /**
+ * 获取上传限制配置
+ */
+export function getUploadLimits() {
+  return request<{ maxFileSize: string }>('/public/configs/upload-limits')
+}
+
+/**
  * 获取 RSA 公钥用于加密传输敏感信息
  */
 export function getRsaPublicKey() {

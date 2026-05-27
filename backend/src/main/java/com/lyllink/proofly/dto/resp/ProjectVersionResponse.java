@@ -24,4 +24,6 @@ public class ProjectVersionResponse {
     private LocalDateTime createdAt;
     private Long uploadedBy;
     private String uploaderNickname;
+    private Integer annotationCount;
+    private Boolean hasVoice;
 }

@@ -1,5 +1,6 @@
 package com.lyllink.proofly.dto.req;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +9,9 @@ import lombok.Setter;
 @Setter
 public class PublicAnnotationRequest {
     private String type; // point, rect, text
+    @JsonProperty("xRatio")
     private BigDecimal xRatio;
+    @JsonProperty("yRatio")
     private BigDecimal yRatio;
     private BigDecimal widthRatio;
     private BigDecimal heightRatio;

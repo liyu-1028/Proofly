@@ -4,11 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.lyllink.proofly.common.BusinessException;
+import com.lyllink.proofly.dao.AnnotationMapper;
 import com.lyllink.proofly.dao.FileObjectMapper;
 import com.lyllink.proofly.dao.ProjectMapper;
 import com.lyllink.proofly.dao.ProjectVersionMapper;
 import com.lyllink.proofly.dao.UserMapper;
 import com.lyllink.proofly.dto.resp.ProjectVersionResponse;
+import com.lyllink.proofly.entity.AnnotationEntity;
 import com.lyllink.proofly.entity.FileObjectEntity;
 import com.lyllink.proofly.entity.ProjectEntity;
 import com.lyllink.proofly.entity.ProjectVersionEntity;
@@ -32,19 +34,22 @@ public class ProjectVersionService {
     private final FileService fileService;
     private final FileObjectMapper fileObjectMapper;
     private final UserMapper userMapper;
+    private final AnnotationMapper annotationMapper;
 
     public ProjectVersionService(
             ProjectVersionMapper projectVersionMapper,
             ProjectMapper projectMapper,
             FileService fileService,
             FileObjectMapper fileObjectMapper,
-            UserMapper userMapper
+            UserMapper userMapper,
+            AnnotationMapper annotationMapper
     ) {
         this.projectVersionMapper = projectVersionMapper;
         this.projectMapper = projectMapper;
         this.fileService = fileService;
         this.fileObjectMapper = fileObjectMapper;
         this.userMapper = userMapper;
+        this.annotationMapper = annotationMapper;
     }
 
     /**
@@ -80,7 +85,19 @@ public class ProjectVersionService {
                 .collect(Collectors.toMap(UserEntity::getId, UserEntity::getNickname));
 
         return versions.stream()
-                .map(v -> toResponse(v, files.get(v.getFileId()), nicknames))
+                .map(v -> {
+                    ProjectVersionResponse resp = toResponse(v, files.get(v.getFileId()), nicknames);
+                    // 填充统计信息
+                    resp.setAnnotationCount(Math.toIntExact(annotationMapper.selectCount(new LambdaQueryWrapper<AnnotationEntity>()
+                            .eq(AnnotationEntity::getVersionId, v.getId())
+                            .eq(AnnotationEntity::getDeleted, false))));
+                    resp.setHasVoice(annotationMapper.selectCount(new LambdaQueryWrapper<AnnotationEntity>()
+                            .eq(AnnotationEntity::getVersionId, v.getId())
+                            .isNotNull(AnnotationEntity::getMediaUrl)
+                            .ne(AnnotationEntity::getMediaUrl, "")
+                            .eq(AnnotationEntity::getDeleted, false)) > 0);
+                    return resp;
+                })
                 .toList();
     }
 
@@ -148,7 +165,10 @@ public class ProjectVersionService {
         project.setUpdatedAt(LocalDateTime.now());
         projectMapper.updateById(project);
 
-        return toResponse(version, fileObject, Map.of(currentUser.userId(), currentUser.nickname()));
+        ProjectVersionResponse resp = toResponse(version, fileObject, Map.of(currentUser.userId(), currentUser.nickname()));
+        resp.setAnnotationCount(0);
+        resp.setHasVoice(false);
+        return resp;
     }
 
     private ProjectEntity requiredProject(Long storeId, Long projectId) {

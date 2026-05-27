@@ -2,6 +2,7 @@ package com.lyllink.proofly.entity;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
@@ -19,7 +20,9 @@ public class AnnotationEntity {
     private Long versionId;
     private Long reviewLinkId;
     private String type; // point, rect, text
+    @JsonProperty("xRatio")
     private BigDecimal xRatio;
+    @JsonProperty("yRatio")
     private BigDecimal yRatio;
     private BigDecimal widthRatio;
     private BigDecimal heightRatio;

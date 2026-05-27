@@ -7,11 +7,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+...
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @Value("${spring.servlet.multipart.max-file-size:25MB}")
+    private String maxFileSize;
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException exception) {
+        log.warn("文件大小超出限制: {}", exception.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ApiResponse.fail(413, "文件大小超出限制，最大支持 " + maxFileSize));
+    }
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException exception) {
         log.warn("业务异常: code={}, message={}", exception.code(), exception.getMessage());
