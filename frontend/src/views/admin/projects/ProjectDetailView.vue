@@ -46,6 +46,17 @@ const editMode = ref(false)
 const latestCreatedLink = ref<reviewLinkApi.ReviewLinkResponse | null>(null)
 const maxFileSizeStr = ref('25MB')
 
+const isAnnotationsExpanded = ref(false)
+const annotationCurrentPage = ref(1)
+const annotationPageSize = 5
+const pagedAnnotations = computed(() => {
+  if (!isAnnotationsExpanded.value && annotations.value.length > 5) {
+    return annotations.value.slice(0, 5)
+  }
+  const start = (annotationCurrentPage.value - 1) * annotationPageSize
+  return annotations.value.slice(start, start + annotationPageSize)
+})
+
 const projectId = computed(() => String(route.params.projectId))
 const designerUsers = computed(() => users.value.filter((user: UserResponse) => user.roles.includes('designer') || user.roles.includes('owner')))
 
@@ -105,14 +116,20 @@ async function loadReviewLinks() {
 async function loadAnnotations(versionId?: string) {
   if (!versionId) {
     annotations.value = []
+    annotationCurrentPage.value = 1
+    isAnnotationsExpanded.value = false
     return
   }
   loadingAnnotations.value = true
   try {
     annotations.value = await annotationApi.listProjectVersionAnnotations(projectId.value, versionId)
+    annotationCurrentPage.value = 1
+    isAnnotationsExpanded.value = false
   } catch (error: any) {
     ElMessage.error(error?.message || '标注加载失败')
     annotations.value = []
+    annotationCurrentPage.value = 1
+    isAnnotationsExpanded.value = false
   } finally {
     loadingAnnotations.value = false
   }
@@ -461,7 +478,14 @@ watch(
                 </template>
               </el-table-column>
               <el-table-column prop="originalFilename" label="文件名" min-width="180" show-overflow-tooltip />
-              <el-table-column label="反馈" width="100">
+              <el-table-column label="版本状态" width="100">
+                <template #default="{ row }">
+                  <el-tag v-if="row.isConfirmed" type="success" size="small">已定稿</el-tag>
+                  <el-tag v-else-if="row.isCurrent" type="primary" size="small">当前展示</el-tag>
+                  <el-tag v-else type="info" size="small">历史版本</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="反馈" width="80">
                 <template #default="{ row }">
                   <div class="version-feedback">
                     <el-badge v-if="row.annotationCount > 0" :value="row.annotationCount" class="badge-item" type="warning">
@@ -536,31 +560,57 @@ watch(
             </div>
             <div v-if="loadingAnnotations" class="empty-inline">正在加载标注...</div>
             <div v-else-if="annotations.length === 0" class="empty-inline">当前版本暂无修改意见</div>
-            <ol v-else class="annotation-list">
-              <li v-for="(annotation, index) in annotations" :key="annotation.id">
-                <div class="annotation-head">
-                  <span>#{{ index + 1 }} {{ annotation.customerName || '客户' }}</span>
-                  <el-tag :type="annotationStatusType(annotation.status)" size="small">
-                    {{ annotationStatusText(annotation.status) }}
-                  </el-tag>
-                </div>
-                <p v-if="annotation.content">{{ annotation.content }}</p>
-                <div v-if="annotation.mediaUrl" class="voice-player">
-                  <el-button size="small" :icon="Microphone" @click="playVoice(annotation.mediaUrl)">
-                    语音意见 {{ annotation.mediaDuration ? annotation.mediaDuration + '"' : '' }}
-                  </el-button>
-                </div>
-                <small>{{ formatTime(annotation.createdAt) }}</small>
-                <div v-if="annotation.status === 'open'" class="annotation-actions">
-                  <el-button size="small" type="primary" link @click="updateAnnotationStatus(annotation, 'resolved')">
-                    标记已处理
-                  </el-button>
-                  <el-button size="small" type="warning" link @click="updateAnnotationStatus(annotation, 'ignored')">
-                    忽略
-                  </el-button>
-                </div>
-              </li>
-            </ol>
+            <template v-else>
+              <ol class="annotation-list">
+                <li v-for="(annotation, index) in pagedAnnotations" :key="annotation.id">
+                  <div class="annotation-head">
+                    <span>#{{ (annotationCurrentPage - 1) * annotationPageSize + index + 1 }} {{ annotation.customerName || '客户' }}</span>
+                    <el-tag :type="annotationStatusType(annotation.status)" size="small">
+                      {{ annotationStatusText(annotation.status) }}
+                    </el-tag>
+                  </div>
+                  <div class="annotation-body">
+                    <span v-if="annotation.content" class="annotation-text">{{ annotation.content }}</span>
+                    <el-button
+                      v-if="annotation.mediaUrl"
+                      size="small"
+                      type="primary"
+                      plain
+                      :icon="Microphone"
+                      @click="playVoice(annotation.mediaUrl)"
+                      class="voice-play-btn"
+                    >
+                      {{ annotation.mediaDuration ? annotation.mediaDuration + '"' : '播放语音' }}
+                    </el-button>
+                  </div>
+                  <small>{{ formatTime(annotation.createdAt) }}</small>
+                  <div v-if="annotation.status === 'open'" class="annotation-actions">
+                    <el-button size="small" type="primary" link @click="updateAnnotationStatus(annotation, 'resolved')">
+                      标记已处理
+                    </el-button>
+                    <el-button size="small" type="warning" link @click="updateAnnotationStatus(annotation, 'ignored')">
+                      忽略
+                    </el-button>
+                  </div>
+                </li>
+              </ol>
+
+              <div v-if="!isAnnotationsExpanded && annotations.length > 5" class="annotation-expand-box">
+                <el-button type="primary" link @click="isAnnotationsExpanded = true">
+                  展开查看全部 {{ annotations.length }} 条意见
+                </el-button>
+              </div>
+
+              <div v-if="isAnnotationsExpanded && annotations.length > annotationPageSize" class="pagination-wrap">
+                <el-pagination
+                  v-model:current-page="annotationCurrentPage"
+                  :total="annotations.length"
+                  :page-size="annotationPageSize"
+                  layout="prev, pager, next"
+                  small
+                />
+              </div>
+            </template>
           </div>
 
           <div class="panel side-panel">
@@ -872,12 +922,39 @@ watch(
   line-height: 1.5;
 }
 
-.voice-player {
+.annotation-body {
   margin: 8px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.annotation-text {
+  color: #344054;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.voice-play-btn {
+  flex-shrink: 0;
 }
 
 .annotation-actions {
   margin-top: 8px;
+}
+
+.annotation-expand-box {
+  margin-top: 12px;
+  text-align: center;
+  border-top: 1px dashed #ebeef5;
+  padding-top: 12px;
+}
+
+.pagination-wrap {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
 }
 
 .timeline-list strong {

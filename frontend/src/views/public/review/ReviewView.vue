@@ -96,6 +96,7 @@ const isRecording = ref(false)
 const recordingTime = ref(0)
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const audioChunks = ref<Blob[]>([])
+const recordedBlob = ref<Blob | null>(null)
 let timer: any = null
 
 async function startRecording() {
@@ -108,15 +109,16 @@ async function startRecording() {
       audioChunks.value.push(event.data)
     }
     
-    mediaRecorder.value.onstop = async () => {
-      const audioBlob = new Blob(audioChunks.value, { type: 'audio/webm' })
-      await uploadVoice(audioBlob)
+    mediaRecorder.value.onstop = () => {
+      recordedBlob.value = new Blob(audioChunks.value, { type: 'audio/webm' })
+      annotationForm.mediaDuration = recordingTime.value
       stream.getTracks().forEach(track => track.stop())
     }
     
     mediaRecorder.value.start()
     isRecording.value = true
     recordingTime.value = 0
+    recordedBlob.value = null
     timer = setInterval(() => {
       recordingTime.value++
     }, 1000)
@@ -133,26 +135,27 @@ function stopRecording() {
   }
 }
 
+function clearVoice() {
+  recordedBlob.value = null
+  annotationForm.mediaDuration = 0
+  annotationForm.mediaUrl = ''
+}
+
 async function uploadVoice(blob: Blob) {
   const file = new File([blob], `voice_${Date.now()}.webm`, { type: 'audio/webm' })
   const formData = new FormData()
   formData.append('file', file)
   formData.append('fileRole', 'attachment')
   
-  try {
-    const response = await fetch(`/api/public/reviews/${token.value}/files/upload`, {
-      method: 'POST',
-      body: formData
-    })
-    const result = await response.json()
-    if (result.code === 200) {
-      annotationForm.mediaUrl = result.data.url
-      annotationForm.mediaDuration = recordingTime.value
-      ElMessage.success('语音录制成功')
-    }
-  } catch (err) {
-    ElMessage.error('语音上传失败')
+  const response = await fetch(`/api/public/reviews/${token.value}/files/upload`, {
+    method: 'POST',
+    body: formData
+  })
+  const result = await response.json()
+  if (result.code !== 0) {
+    throw new Error(result.message || '语音上传失败')
   }
+  return result.data.url
 }
 
 const confirmationForm = reactive({
@@ -225,18 +228,23 @@ async function submitAnnotation() {
     ElMessage.warning('请先点击设计稿上的修改位置')
     return
   }
-  if (!annotationForm.content.trim()) {
-    ElMessage.warning('请填写修改意见')
+  if (!annotationForm.content.trim() && !recordedBlob.value) {
+    ElMessage.warning('请填写修改意见或录制语音')
     return
   }
   submittingAnnotation.value = true
   try {
+    let mediaUrl = annotationForm.mediaUrl
+    if (recordedBlob.value) {
+      mediaUrl = await uploadVoice(recordedBlob.value)
+    }
+
     const created = await annotationApi.createPublicAnnotation(token.value, {
       type: 'point',
       xRatio: selectedPoint.value.xRatio,
       yRatio: selectedPoint.value.yRatio,
       content: annotationForm.content.trim(),
-      mediaUrl: annotationForm.mediaUrl || undefined,
+      mediaUrl: mediaUrl || undefined,
       mediaDuration: annotationForm.mediaDuration || undefined,
       customerName: annotationForm.customerName.trim() || undefined,
     })
@@ -244,6 +252,7 @@ async function submitAnnotation() {
     annotationForm.content = ''
     annotationForm.mediaUrl = ''
     annotationForm.mediaDuration = 0
+    recordedBlob.value = null
     selectedPoint.value = null
     ElMessage.success('修改意见已提交')
   } catch (error: any) {
@@ -370,17 +379,20 @@ onMounted(() => {
                 <el-form-item label="客户名称">
                   <el-input v-model="annotationForm.customerName" placeholder="用于设计师识别反馈人" />
                 </el-form-item>
-                <el-form-item label="修改意见" required>
+                <el-form-item label="修改意见">
                   <el-input v-model="annotationForm.content" type="textarea" :rows="4" placeholder="请输入需要调整的内容" />
                 </el-form-item>
                 <div class="voice-actions">
                   <el-button v-if="!isRecording" size="small" @click="startRecording">
-                    录制语音意见
+                    {{ recordedBlob ? '重新录制语音' : '录制语音意见' }}
                   </el-button>
                   <el-button v-else size="small" type="danger" @click="stopRecording">
                     正在录音 ({{ recordingTime }}s) - 点击停止
                   </el-button>
-                  <span v-if="annotationForm.mediaUrl" class="voice-ready">语音已就绪 ({{ annotationForm.mediaDuration }}s)</span>
+                  <div v-if="recordedBlob" class="voice-ready">
+                    <span>语音已就绪 ({{ annotationForm.mediaDuration }}s)</span>
+                    <el-button link type="danger" size="small" @click="clearVoice">清除</el-button>
+                  </div>
                 </div>
                 <el-button type="primary" :loading="submittingAnnotation" @click="submitAnnotation" style="margin-top: 12px;">提交意见</el-button>
               </el-form>
@@ -489,6 +501,21 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   color: #2563eb;
+}
+
+.voice-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.voice-ready {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #16a34a;
 }
 
 .review-layout {
