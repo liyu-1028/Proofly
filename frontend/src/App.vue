@@ -22,7 +22,7 @@ async function handleLogout() {
 }
 
 onMounted(() => {
-  if (session.isLoggedIn) {
+  if (session.isAuthenticated) {
     notificationStore.fetchUnreadCount()
     notificationStore.connectWebSocket()
   }

@@ -23,6 +23,17 @@ springdoc:
     path: /swagger-ui.html
 
 proofly:
+  review-base-url: ${PROOFLY_REVIEW_BASE_URL:http://localhost:5173/review/}
+  billing:
+    base-price-per-month: ${PROOFLY_BILLING_BASE_PRICE:29.00}
+    discounts:
+      1: 1.00
+      6: 0.90
+      12: 0.75
+    xpay:
+      app-id: ${XPAY_APP_ID:mock_app_id}
+      app-key: ${XPAY_APP_KEY:mock_app_key}
+      api-url: ${XPAY_API_URL:http://localhost:8080/api/public/webhook/xpay}
   auth:
     # 用户密码BCrypt加密的盐
     jwt-secret: ${PROOFLY_AUTH_JWT_SECRET:proofly-local-dev-jwt-secret-must-be-at-least-32-bytes}

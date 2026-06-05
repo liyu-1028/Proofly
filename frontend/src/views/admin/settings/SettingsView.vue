@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus'
 import { getCurrentStore, updateCurrentStore, type StoreResponse } from '@/api/admin'
 import { getConfigs, updateConfig, type SystemConfigResponse } from '@/api/configs'
 import { useSessionStore } from '@/stores/session'
+import { createOrder, getOrderStatus, getOrders, type OrderResponse } from '@/api/billing'
 
 const session = useSessionStore()
 const loading = ref(false)
@@ -99,8 +100,99 @@ const handleSaveBrandConfig = async (key: string, value: string) => {
   }
 }
 
+const payDialogVisible = ref(false)
+const selectedMonths = ref(1)
+const currentAmount = ref(29)
+const paymentMethod = ref('wechat')
+const creatingOrder = ref(false)
+const currentOrder = ref<OrderResponse | null>(null)
+const billingHistory = ref<OrderResponse[]>([])
+let statusTimer: any = null
+
+const handleMonthsChange = (val: any) => {
+  const months = Number(val)
+  if (months === 1) {
+    currentAmount.value = 29
+  } else if (months === 6) {
+    currentAmount.value = 149
+  } else if (months === 12) {
+    currentAmount.value = 259
+  }
+}
+
+const openPayDialog = () => {
+  payDialogVisible.value = true
+  selectedMonths.value = 1
+  currentAmount.value = 29
+  paymentMethod.value = 'wechat'
+  currentOrder.value = null
+  if (statusTimer) {
+    clearInterval(statusTimer)
+    statusTimer = null
+  }
+}
+
+const handleCreateOrder = async () => {
+  creatingOrder.value = true
+  try {
+    const order = await createOrder({
+      durationMonths: selectedMonths.value,
+      paymentMethod: paymentMethod.value,
+    })
+    currentOrder.value = order
+    startPolling(order.orderNo)
+  } catch (error: any) {
+    ElMessage.error(error.message || '订单创建失败')
+  } finally {
+    creatingOrder.value = false
+  }
+}
+
+const startPolling = (orderNo: string) => {
+  if (statusTimer) clearInterval(statusTimer)
+  statusTimer = setInterval(async () => {
+    try {
+      const statusRes = await getOrderStatus(orderNo)
+      if (statusRes.isPaid) {
+        clearInterval(statusTimer)
+        statusTimer = null
+        ElMessage.success('支付成功，已为您开通/续费 Pro 套餐！')
+        payDialogVisible.value = false
+        await fetchStoreAndConfigs()
+        await fetchBillingHistory()
+      }
+    } catch (error) {
+      console.error('查询订单状态失败', error)
+    }
+  }, 3000)
+}
+
+const goToPayPage = () => {
+  if (currentOrder.value && currentOrder.value.payUrl) {
+    window.open(currentOrder.value.payUrl)
+  }
+}
+
+const handleClosePayDialog = (done: () => void) => {
+  if (statusTimer) {
+    clearInterval(statusTimer)
+    statusTimer = null
+  }
+  done()
+}
+
+const fetchBillingHistory = async () => {
+  try {
+    const orders = await getOrders()
+    billingHistory.value = orders
+  } catch (error: any) {
+    console.error('获取账单历史失败', error)
+  }
+}
+
 onMounted(() => {
   fetchStoreAndConfigs()
+  fetchBillingHistory()
 })
 </script>
 
@@ -143,7 +235,9 @@ onMounted(() => {
           <span v-if="store?.planExpiresAt" style="margin-left: 12px; font-size: 13px; color: #999">
             有效期至：{{ new Date(store.planExpiresAt).toLocaleDateString() }}
           </span>
-          <el-button v-if="store?.planType === 'free'" type="warning" link style="margin-left: 12px">升级高级版</el-button>
+          <el-button type="warning" link style="margin-left: 12px" @click="openPayDialog">
+            {{ store?.planType === 'free' ? '升级高级版' : '立即续费' }}
+          </el-button>
         </el-form-item>
         <el-form-item label="门店邀请码">
           <code style="font-weight: bold; color: #2a9d8f">{{ store?.inviteCode }}</code>
@@ -241,6 +335,97 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- 账单记录 Panel -->
+    <div class="panel" style="margin-top: 24px">
+      <div class="section-header">
+        <h2>账单记录</h2>
+        <p>查看您门店的历史升级及续费记录。</p>
+      </div>
+
+      <el-table :data="billingHistory" style="width: 100%">
+        <el-table-column prop="orderNo" label="订单号" width="220" />
+        <el-table-column prop="planType" label="套餐类型" width="100">
+          <template #default="{ row }">
+            <el-tag size="small" type="warning">高级版 (Pro)</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="amount" label="支付金额" width="100">
+          <template #default="{ row }">
+            ¥{{ row.amount.toFixed(2) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="durationMonths" label="购买时长" width="100">
+          <template #default="{ row }">
+            {{ row.durationMonths }} 个月
+          </template>
+        </el-table-column>
+        <el-table-column prop="paymentMethod" label="支付方式" width="120">
+          <template #default="{ row }">
+            {{ row.paymentMethod === 'wechat' ? '微信支付' : '支付宝' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="支付状态" width="120">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'paid' ? 'success' : row.status === 'pending' ? 'info' : 'danger'">
+              {{ row.status === 'paid' ? '已支付' : row.status === 'pending' ? '待支付' : '已失效' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="订单创建时间">
+          <template #default="{ row }">
+            {{ new Date(row.createdAt).toLocaleString() }}
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <!-- 支付弹窗 -->
+    <el-dialog
+      v-model="payDialogVisible"
+      title="升级/续费高级套餐"
+      width="480px"
+      :before-close="handleClosePayDialog"
+    >
+      <div class="pay-dialog-content">
+        <p class="pay-intro">升级高级版可享无限项目数、添加协作员工、自定义品牌 Logo 与主色调等高级专属功能。</p>
+        
+        <el-form label-width="80px">
+          <el-form-item label="选择时长">
+            <el-radio-group v-model="selectedMonths" @change="handleMonthsChange" :disabled="creatingOrder">
+              <el-radio-button :value="1">1 个月</el-radio-button>
+              <el-radio-button :value="6">6 个月 (9折)</el-radio-button>
+              <el-radio-button :value="12">12 个月 (75折)</el-radio-button>
+            </el-radio-group>
+          </el-form-item>
+          
+          <el-form-item label="支付金额">
+            <span class="pay-price">¥{{ currentAmount }}</span>
+          </el-form-item>
+          
+          <el-form-item label="支付方式">
+            <el-radio-group v-model="paymentMethod" :disabled="creatingOrder">
+              <el-radio value="wechat">微信支付 (模拟)</el-radio>
+              <el-radio value="alipay">支付宝 (模拟)</el-radio>
+            </el-radio-group>
+          </el-form-item>
+        </el-form>
+
+        <div v-if="currentOrder" class="qr-box">
+          <p class="qr-tip">订单已创建，请点击下方按钮前往模拟收银台支付</p>
+          <el-button type="primary" size="large" @click="goToPayPage" style="width: 100%">
+            前往模拟收银台付款
+          </el-button>
+          <p class="qr-loading"><el-icon class="is-loading"><Loading /></el-icon> 等待支付中，请勿关闭弹窗...</p>
+        </div>
+        
+        <div v-else class="pay-action-row">
+          <el-button type="primary" :loading="creatingOrder" @click="handleCreateOrder" style="width: 100%" size="large">
+            立即下单
+          </el-button>
+        </div>
+      </div>
+    </el-dialog>
   </section>
 </template>
 
@@ -303,5 +488,38 @@ onMounted(() => {
 .logo-preview img {
   max-width: 100%;
   height: auto;
+}
+
+.pay-intro {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.pay-price {
+  font-size: 24px;
+  font-weight: bold;
+  color: #e76f51;
+}
+.qr-box {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f7f9fa;
+  border-radius: 6px;
+  text-align: center;
+}
+.qr-tip {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 12px;
+}
+.qr-loading {
+  font-size: 12px;
+  color: #999;
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
 }
 </style>

@@ -36,7 +36,7 @@ export const useNotificationStore = defineStore('notification', () => {
 
   const connectWebSocket = () => {
     const sessionStore = useSessionStore()
-    if (!sessionStore.user?.id || stompClient.value?.connected) return
+    if (!sessionStore.user?.userId || stompClient.value?.connected) return
 
     // 在本地开发中，后端通常运行在 8080 端口，或与前端代理相同的端口
     // 假设已配置 Vite 代理或使用相对路径
@@ -50,7 +50,7 @@ export const useNotificationStore = defineStore('notification', () => {
       console.log('WebSocket Connected')
       
       // 订阅个人通知队列
-      stompClient.value?.subscribe(`/user/${sessionStore.user?.id}/queue/notifications`, (message) => {
+      stompClient.value?.subscribe(`/user/${sessionStore.user?.userId}/queue/notifications`, (message) => {
         const notification: NotificationResponse = JSON.parse(message.body)
         // 添加到列表并增加计数
         notifications.value.unshift(notification)

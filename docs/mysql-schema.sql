@@ -340,6 +340,27 @@ CREATE TABLE IF NOT EXISTS `system_config` (
   UNIQUE KEY `uk_system_config_key` (`store_id`, `config_key`, `deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='业务配置表';
 
+CREATE TABLE IF NOT EXISTS `payment_order` (
+  `id` BIGINT NOT NULL COMMENT '订单 ID',
+  `store_id` BIGINT NOT NULL COMMENT '所属门店 ID',
+  `order_no` VARCHAR(64) NOT NULL COMMENT '唯一订单号',
+  `plan_type` VARCHAR(32) NOT NULL DEFAULT 'pro' COMMENT '购买套餐类型',
+  `amount` DECIMAL(10,2) NOT NULL COMMENT '支付金额',
+  `duration_months` INT NOT NULL COMMENT '套餐月数',
+  `status` VARCHAR(32) NOT NULL DEFAULT 'pending' COMMENT '支付状态：pending, paid, failed, expired',
+  `payment_method` VARCHAR(32) NULL COMMENT '支付方式：wechat, alipay',
+  `out_trade_no` VARCHAR(128) NULL COMMENT '外部交易单号',
+  `paid_at` DATETIME(3) NULL COMMENT '支付成功时间',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+  `created_by` BIGINT NULL COMMENT '创建人',
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+  `updated_by` BIGINT NULL COMMENT '更新人',
+  `deleted` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_payment_order_no` (`order_no`),
+  KEY `idx_payment_order_store` (`store_id`, `status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='支付订单表';
+
 -- ---------------------------------------------------------
 -- 初始基础数据 (仅供开发/本地环境参考)
 -- ---------------------------------------------------------

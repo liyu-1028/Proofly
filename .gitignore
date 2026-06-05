@@ -8,6 +8,9 @@
 
 target/
 
+.mcp.json
+
+
 
 *.local
 
