@@ -110,7 +110,8 @@ async function startRecording() {
     }
     
     mediaRecorder.value.onstop = () => {
-      recordedBlob.value = new Blob(audioChunks.value, { type: 'audio/webm' })
+      const mimeType = mediaRecorder.value?.mimeType || 'audio/webm'
+      recordedBlob.value = new Blob(audioChunks.value, { type: mimeType })
       annotationForm.mediaDuration = recordingTime.value
       stream.getTracks().forEach(track => track.stop())
     }
@@ -142,7 +143,9 @@ function clearVoice() {
 }
 
 async function uploadVoice(blob: Blob) {
-  const file = new File([blob], `voice_${Date.now()}.webm`, { type: 'audio/webm' })
+  const isMp4 = blob.type.includes('mp4')
+  const ext = isMp4 ? 'm4a' : 'webm'
+  const file = new File([blob], `voice_${Date.now()}.${ext}`, { type: blob.type })
   const formData = new FormData()
   formData.append('file', file)
   formData.append('fileRole', 'attachment')
@@ -155,7 +158,7 @@ async function uploadVoice(blob: Blob) {
   if (result.code !== 0) {
     throw new Error(result.message || '语音上传失败')
   }
-  return result.data.url
+  return result.data.objectKey
 }
 
 const confirmationForm = reactive({

@@ -83,6 +83,7 @@ public class PublicReviewController {
         Map<String, String> resp = new java.util.HashMap<>();
         resp.put("id", entity.getId().toString());
         resp.put("url", url);
+        resp.put("objectKey", entity.getObjectKey());
         return ApiResponse.success(resp);
     }
 
@@ -129,6 +130,7 @@ public class PublicReviewController {
         entity.setWidthRatio(request.getWidthRatio());
         entity.setHeightRatio(request.getHeightRatio());
         entity.setContent(request.getContent());
+        // 存储 ObjectKey
         entity.setMediaUrl(request.getMediaUrl());
         entity.setMediaDuration(request.getMediaDuration());
         entity.setCustomerName(request.getCustomerName());
@@ -167,7 +169,10 @@ public class PublicReviewController {
         resp.setWidthRatio(entity.getWidthRatio());
         resp.setHeightRatio(entity.getHeightRatio());
         resp.setContent(entity.getContent());
-        resp.setMediaUrl(entity.getMediaUrl());
+        
+        // 动态生成预签名 URL
+        resp.setMediaUrl(fileService.getFilePreviewUrl(entity.getMediaUrl()));
+        
         resp.setMediaDuration(entity.getMediaDuration());
         resp.setCustomerName(entity.getCustomerName());
         resp.setStatus(entity.getStatus());

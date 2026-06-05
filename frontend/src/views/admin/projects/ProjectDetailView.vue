@@ -489,9 +489,9 @@ watch(
                 <template #default="{ row }">
                   <div class="version-feedback">
                     <el-badge v-if="row.annotationCount > 0" :value="row.annotationCount" class="badge-item" type="warning">
-                      <el-icon :size="16" title="修改意见"><ChatLineRound /></el-icon>
+                      <el-icon :size="14" title="修改意见"><ChatLineRound /></el-icon>
                     </el-badge>
-                    <el-icon v-if="row.hasVoice" :size="16" class="voice-icon" title="含语音意见"><Microphone /></el-icon>
+                    <el-icon v-if="row.hasVoice" :size="14" class="voice-icon" title="含语音意见"><Microphone /></el-icon>
                   </div>
                 </template>
               </el-table-column>
@@ -675,7 +675,7 @@ watch(
                 </div>
                 <div class="review-link-actions">
                   <el-button link type="primary" @click="copyText(link.url)">复制</el-button>
-                  <el-button link type="success" @click="copyReminderText(link.url)">提醒</el-button>
+                  <el-button v-if="link.url" link type="success" @click="copyReminderText(link.url)">提醒</el-button>
                   <el-button link type="warning" @click="toggleReviewLink(link)">
                     {{ link.status === 'disabled' ? '启用' : '禁用' }}
                   </el-button>
@@ -836,6 +836,15 @@ watch(
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 4px 0;
+}
+
+.badge-item {
+  margin-right: 8px;
+}
+
+:deep(.badge-item .el-badge__content) {
+  transform: scale(0.8) translate(20%, -20%);
 }
 
 .voice-icon {

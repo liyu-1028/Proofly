@@ -4,6 +4,7 @@ import com.lyllink.proofly.common.ApiResponse;
 import com.lyllink.proofly.dto.resp.AnnotationResponse;
 import com.lyllink.proofly.entity.AnnotationEntity;
 import com.lyllink.proofly.service.AnnotationService;
+import com.lyllink.proofly.service.FileService;
 import com.lyllink.proofly.utils.CurrentUserHolder;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,9 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminAnnotationController {
 
     private final AnnotationService annotationService;
+    private final FileService fileService;
 
-    public AdminAnnotationController(AnnotationService annotationService) {
+    public AdminAnnotationController(AnnotationService annotationService, FileService fileService) {
         this.annotationService = annotationService;
+        this.fileService = fileService;
     }
 
     @GetMapping
@@ -53,7 +56,10 @@ public class AdminAnnotationController {
         resp.setWidthRatio(entity.getWidthRatio());
         resp.setHeightRatio(entity.getHeightRatio());
         resp.setContent(entity.getContent());
-        resp.setMediaUrl(entity.getMediaUrl());
+
+        // 动态生成预签名 URL
+        resp.setMediaUrl(fileService.getFilePreviewUrl(entity.getMediaUrl()));
+
         resp.setMediaDuration(entity.getMediaDuration());
         resp.setCustomerName(entity.getCustomerName());
         resp.setStatus(entity.getStatus());
