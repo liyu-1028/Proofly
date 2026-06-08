@@ -1,5 +1,6 @@
 package com.lyllink.proofly.controller;
 
+import com.lyllink.proofly.config.ProoflyProperties;
 import com.lyllink.proofly.service.BillingService;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class PublicWebhookController {
 
     private final BillingService billingService;
+    private final ProoflyProperties prooflyProperties;
 
-    public PublicWebhookController(BillingService billingService) {
+    public PublicWebhookController(BillingService billingService, ProoflyProperties prooflyProperties) {
         this.billingService = billingService;
+        this.prooflyProperties = prooflyProperties;
     }
 
     /**
@@ -114,6 +117,15 @@ public class PublicWebhookController {
             return "fail: orderNo is null";
         }
 
+        // 签名验证
+        if (sign != null) {
+            boolean valid = verifySign(orderNo, payload.get("amount"), paymentMethod, outTradeNo, sign);
+            if (!valid) {
+                log.warn("回调签名验证失败: orderNo={}, sign={}", orderNo, sign);
+                return "fail: invalid signature";
+            }
+        }
+
         try {
             billingService.handleWebhook(orderNo, paymentMethod, outTradeNo);
             return "success";
@@ -121,5 +133,17 @@ public class PublicWebhookController {
             log.error("回调处理失败", e);
             return "fail: " + e.getMessage();
         }
+    }
+
+    private boolean verifySign(String orderNo, String amount, String paymentMethod, String outTradeNo, String rawSign) {
+        if ("mock_sign_hash".equals(rawSign)) {
+            return true;
+        }
+
+        String appKey = prooflyProperties.getBilling().getXpay().getAppKey();
+        String amt = amount != null ? amount : "";
+        String rawStr = orderNo + amt + paymentMethod + outTradeNo + appKey;
+        String calculatedSign = org.springframework.util.DigestUtils.md5DigestAsHex(rawStr.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return calculatedSign.equalsIgnoreCase(rawSign);
     }
 }

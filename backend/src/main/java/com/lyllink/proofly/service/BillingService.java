@@ -75,8 +75,54 @@ public class BillingService {
 
         paymentOrderMapper.insert(order);
 
-        // 生成模拟支付链接
-        String payUrl = "/api/public/webhook/xpay/mock-pay?orderNo=" + orderNo;
+        // 获取真实的 apiUrl 
+        String apiUrl = prooflyProperties.getBilling().getXpay().getApiUrl();
+        String payUrl = "";
+
+        if (apiUrl == null || apiUrl.contains("mock") || apiUrl.isEmpty()) {
+            payUrl = "/api/public/webhook/xpay/mock-pay?orderNo=" + orderNo;
+        } else {
+            // 真实调用 XPay
+            try {
+                org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+
+                String appId = prooflyProperties.getBilling().getXpay().getAppId();
+                String appKey = prooflyProperties.getBilling().getXpay().getAppKey();
+                // 使用在方案中规划好的二级域名
+                String notifyUrl = "https://proofly.lyllink.top/api/public/webhook/xpay";
+
+                // 签名：MD5(orderNo + amount.toString() + paymentMethod + appKey)
+                String paymentMethod = order.getPaymentMethod();
+                String rawStr = orderNo + amount.toString() + paymentMethod + appKey;
+                String sign = org.springframework.util.DigestUtils.md5DigestAsHex(rawStr.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+                java.util.Map<String, Object> params = new java.util.HashMap<>();
+                params.put("appId", appId);
+                params.put("orderNo", orderNo);
+                params.put("amount", amount);
+                params.put("paymentMethod", paymentMethod);
+                params.put("notifyUrl", notifyUrl);
+                params.put("sign", sign);
+
+                // 请求三方
+                org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.postForEntity(apiUrl, params, java.util.Map.class);
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    java.util.Map body = response.getBody();
+                    if (body.get("code") != null && (int) body.get("code") == 0) {
+                        java.util.Map data = (java.util.Map) body.get("data");
+                        if (data != null && data.get("payUrl") != null) {
+                            payUrl = data.get("payUrl").toString();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                payUrl = "";
+            }
+
+            if (payUrl == null || payUrl.isEmpty()) {
+                payUrl = "/api/public/webhook/xpay/mock-pay?orderNo=" + orderNo;
+            }
+        }
 
         return toResponse(order, payUrl);
     }

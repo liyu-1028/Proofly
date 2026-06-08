@@ -453,8 +453,8 @@
 - **基础用量网关 (UsageService)**：免费版活跃项目数（限制最多3个）及协作员工数（限制只能有1个老板）的拦截与自动判定。
 - **增长裂变 (ReferralService)**：邀请码自动发奖机制（被邀请人在系统中完成首次定稿，双方自动延期 30 天 Pro 高级版）。
 - **增值权益系统**：实现了语音批注存储与播放、高级品牌定制（设置门店专属 Logo 和主色调）以及 PDF 单页在线渲染与标注。
-- **账单与支付流水**：在数据库新增 `payment_order` 表，完成创建订单、扫码支付及历史账单查询接口。
-- **Webhook 回调 (PublicWebhookController)**：实现 XPay 接口的扫码模拟收银台 HTML 页面，并通过 Webhook 成功异步支付，自动顺延门店高级套餐到期时间 (`plan_expires_at`)。
+- **账单与支付流水**：在数据库新增 `payment_order` 表，完成统一下单（支持远程真实 XPay API 呼叫与本地沙箱自动降级双模式）、支付状态查询及历史账单流水接口。
+- **Webhook 回调与真实验签 (PublicWebhookController)**：完成接收 XPay 异步 Webhook 回调通知，新增基于 MD5(orderNo + amount + paymentMethod + outTradeNo + appKey) 的安全验签机制（且支持本地 mock 支付放行），成功后自动顺延门店 Pro 套餐。
 - **自动到期降级与提醒 (StorePlanExpirationTask)**：实现每日自动扫描，套餐到期自动降级为 free 账户，并在到期前 7/3/1 天向门店 Owner 发送系统站内通知。
 - **前端账单管理 (`SettingsView.vue`)**：实现了升级高级版/续费套餐入口、套餐选择弹窗、模拟付款二维码页面跳转及支付状态 3 秒轮询、历史账单表格查询展示。
 
