@@ -37,10 +37,9 @@ This document provides essential context and guidelines for developing the Proof
 ### Commands
 
 #### Backend
-Refer to `backend/MAVEN.md` for specific local Maven paths if not using the default system Maven.
+Refer to `backend/MAVEN.md` for Maven setup details.
 ```bash
 cd backend
-# Run with specific JAVA_HOME and settings if necessary (see MAVEN.md)
 mvn spring-boot:run
 ```
 

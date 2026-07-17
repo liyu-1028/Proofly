@@ -1,26 +1,47 @@
-# Maven 文件约定
+# Maven 构建约定
 
-本文档记录审稿宝后端项目使用 Maven 的本地约定。该约定只用于开发协作和命令执行，不修改本机 Maven 安装目录，也不把本机私有配置文件提交到仓库。
+本文档说明审稿宝后端的 Maven 使用约定。
 
-## 本地 Maven 路径
+## 版本要求
 
-| 项目 | 路径 |
-| --- | --- |
-| Maven 安装目录 | `/opt/homebrew/Cellar/maven/3.9.9/libexec` |
-| Maven 可执行文件 | `/opt/homebrew/Cellar/maven/3.9.9/libexec/bin/mvn` |
-| Maven 配置文件 | `/opt/homebrew/Cellar/maven/3.9.9/libexec/conf/settings2.xml` |
-| JDK 17 JAVA_HOME | `/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home` |
+| 工具 | 最低版本 |
+|------|---------|
+| JDK | 17（Spring Boot 3.5.x 要求） |
+| Maven | 3.9+ |
+
+## 环境变量
+
+```bash
+# Linux / macOS
+export JAVA_HOME=/path/to/jdk-17
+
+# 验证
+java -version   # 应输出 17.x
+mvn -v          # 应输出 Java version: 17.x
+```
+
+> 💡 如果本机默认 `mvn` 使用 Java 8，需要显式设置 `JAVA_HOME` 后再调用 `mvn`。
 
 ## 依赖仓库
 
-- 依赖仓库使用 Maven 默认本地仓库：`~/.m2/repository`。
-- 项目内不指定自定义本地仓库路径。
-- `pom.xml` 中不写死个人镜像仓库、本地仓库路径或本机绝对路径。
-- 本机私有 Maven 配置文件 `settings2.xml` 不提交到仓库。
+- 默认使用 Maven 中央仓库。
+- 建议配置国内镜像加速（如阿里云），编辑 `~/.m2/settings.xml`：
+
+  ```xml
+  <mirrors>
+    <mirror>
+      <id>aliyun</id>
+      <url>https://maven.aliyun.com/repository/public</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+  </mirrors>
+  ```
+
+- 本机私有 Maven 配置（如 `settings2.xml`）**不要**提交到仓库。
 
 ## 命令执行目录
 
-所有 Maven 命令默认在 `backend/` 目录中执行。
+所有 Maven 命令默认在 `backend/` 目录中执行：
 
 ```bash
 cd backend
@@ -31,24 +52,42 @@ cd backend
 ### 编译
 
 ```bash
-JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home /opt/homebrew/Cellar/maven/3.9.9/libexec/bin/mvn -s /opt/homebrew/Cellar/maven/3.9.9/libexec/conf/settings2.xml -q -DskipTests compile
+mvn -B -q -DskipTests package
 ```
 
-### 测试
+### 运行测试
 
 ```bash
-JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home /opt/homebrew/Cellar/maven/3.9.9/libexec/bin/mvn -s /opt/homebrew/Cellar/maven/3.9.9/libexec/conf/settings2.xml test
+mvn test
 ```
 
 ### 启动后端
 
 ```bash
-JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home /opt/homebrew/Cellar/maven/3.9.9/libexec/bin/mvn -s /opt/homebrew/Cellar/maven/3.9.9/libexec/conf/settings2.xml spring-boot:run
+mvn spring-boot:run
 ```
+
+启动后访问：
+
+- 健康检查：<http://localhost:8080/api/health>
+- API 文档：<http://localhost:8080/swagger-ui.html>
 
 ## 协作约定
 
-- 后端项目初始化后，优先使用本文档中的 Maven 可执行文件和配置文件执行构建命令。
-- Spring Boot 3.5.x 要求使用 JDK 17 或更高版本。本机 Maven 默认可能使用 Java 8，执行后端命令时需要显式设置上面的 `JAVA_HOME`。
-- 如果本机 Maven 路径变化，只更新本文档或在本机 shell 中配置别名，不把个人环境路径写入业务代码。
-- 后续如需要 Maven Wrapper，应单独讨论后再加入，避免和当前本机 Maven 约定混淆。
+- 不在 `pom.xml` 中写死个人镜像仓库、本地仓库路径或本机绝对路径。
+- 后端团队成员可使用本机任意 Maven 安装方式（Homebrew、SDKMAN、手动安装），但提交的命令示例应使用通用 `mvn` 命令。
+- CI 中使用固定 Maven 版本（推荐 3.9.x）。
+
+## 故障排查
+
+**Q: `mvn` 报 "java.lang.IllegalArgumentException: Unsupported class file major version"**
+A: JDK 版本过低，必须使用 JDK 17+。
+
+**Q: 依赖下载缓慢或超时**
+A: 配置阿里云 Maven 镜像（见上文）。
+
+**Q: 端口 8080 被占用**
+A: 通过 `SERVER_PORT` 环境变量覆盖：
+```bash
+SERVER_PORT=9090 mvn spring-boot:run
+```

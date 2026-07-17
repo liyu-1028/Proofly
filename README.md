@@ -1,274 +1,230 @@
 # 审稿宝（Proofly）
 
-审稿宝是一套面向广告制作店、图文打印店、快印店、包装印刷店和设计工作室的在线审稿确认系统。
+> 一套面向**广告制作店 / 图文打印店 / 快印店 / 包装印刷店 / 设计工作室**的在线审稿确认系统。
 
-它解决广告打印行业中常见的审稿沟通问题：客户在微信里说“往左一点”“字大一点”，设计师需要反复截图、标记、确认，版本容易混乱，最终客户确认留痕也不完整。
+![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
+![Status: MVP](https://img.shields.io/badge/Status-MVP-green)
+![Backend: Spring Boot 3](https://img.shields.io/badge/Backend-Spring%20Boot%203.5-brightgreen)
+![Frontend: Vue 3](https://img.shields.io/badge/Frontend-Vue%203.5-brightgreen)
 
-审稿宝的核心目标是：
+## 📖 项目简介
 
-> 设计师上传设计稿，客户通过链接在线查看、标注修改意见，并最终点击“确认定稿”，系统自动保存确认记录。
+**审稿宝**帮助设计工作室与门店，把传统线下"邮件/微信来回发稿"的设计确认流程搬到线上：
 
-## 目标用户
-
-| 角色 | 使用场景 |
-| --- | --- |
-| 门店老板 | 查看所有审稿项目、跟踪订单审稿状态、管理门店成员 |
-| 设计师 | 创建审稿项目、上传设计稿、查看客户修改意见、上传新版本 |
-| 客户 | 打开审稿链接、在线查看设计稿、标注修改意见、确认定稿 |
-| 管理员 | 管理门店、员工、套餐、系统配置和基础数据 |
-
-## 核心痛点
-
-- 客户反馈表达不清楚，设计师需要反复沟通确认。
-- 修改意见散落在微信、QQ、电话和截图里，不方便统一管理。
-- 设计稿版本混乱，难以确认客户最终认可的是哪一版。
-- 客户后续反悔时，门店缺少明确的确认记录。
-- 门店老板无法快速了解每个审稿项目的状态和责任人。
-
-## 标准审稿流程
-
-```text
-设计师创建审稿项目
-→ 上传设计稿
-→ 系统生成审稿链接
-→ 设计师将链接发送给客户
-→ 客户打开链接查看设计稿
-→ 客户在线标注修改意见
-→ 设计师根据意见修改设计稿
-→ 设计师上传新版设计稿
-→ 客户再次查看
-→ 客户确认定稿
-→ 系统保存确认记录
+```
+设计师创建项目 → 上传设计稿 → 生成审稿链接 → 客户标注修改意见
+                                          ↓
+                              设计师上传新版 → 客户确认定稿
+                                          ↓
+                              系统保存可追溯确认记录
 ```
 
-## MVP 功能模块
+**核心价值**：
 
-### 审稿项目
+- **多方协同**：设计师、客户、门店老板在同一闭环内协作
+- **可追溯**：每个版本、每条标注、每次确认都留痕
+- **多租户**：所有业务表按门店隔离，支持 SaaS 化运营
+- **订阅制**：免费版/Pro 版套餐 + 自动到期管理 + 邀请裂变
 
-- 创建、编辑、归档审稿项目。
-- 记录项目名称、客户信息、负责人、状态和备注。
-- 支持按门店、设计师、状态筛选项目。
+## ✨ 核心特性
 
-### 设计稿版本
+### 门店后台
 
-- 每次上传生成独立版本，不覆盖历史文件。
-- 支持查看版本列表、当前版本和历史版本。
-- 记录上传人、上传时间、版本说明和文件信息。
+- 🏪 **门店与员工管理** — 多角色 RBAC（owner / designer / admin）
+- 📁 **审稿项目** — 完整生命周期：草稿 → 待反馈 → 需修改 → 已确认 → 归档
+- 🖼️ **设计稿版本管理** — 自动递增版本号，历史不可覆盖
+- 📝 **在线标注评论** — 客户在图上点位标注，设计师按版本处理
+- ✅ **客户确认定稿** — 幂等确认，IP/UA 留痕
+- 📊 **后台工作台** — 状态看板、最近项目、近期动态
+- 💬 **站内通知** — 项目动态自动触达
+- 💰 **套餐订阅** — 模拟 XPay 沙箱 + 自动续期 + 邀请裂变 + 到期降级
 
-### 文件上传与预览
+### 客户审稿（公开链接）
 
-- 支持常见设计稿文件的上传与在线预览。
-- 文件原始数据存储在 MinIO。
-- 文件元数据和业务关系存储在 MySQL。
+- 🔗 **免登录访问** — 哈希 Token，泄露可吊销
+- 👁️ **版本切换预览** — 不下载原图
+- ✏️ **点图标注** — 直接在浏览器中提交修改意见
+- 🎤 **语音批注** — Pro 增值
+- 🖋️ **确认定稿** — 提交后项目自动变更状态
 
-### 在线标注评论
+### 运营 & 商业化
 
-- 客户可在设计稿上标注位置并填写修改意见。
-- 设计师可查看、处理和回复标注。
-- 标注内容与具体设计稿版本绑定。
+- 💼 **套餐计费** — 月/6月/年三档，自动应用折扣
+- 📈 **用量控制** — 免费版限 3 个活跃项目、1 个老板
+- 🎁 **裂变邀请** — 邀请双方各延期 30 天
+- 🔔 **到期提醒** — 7/3/1 天前自动通知
+- 📜 **账单流水** — 完整订单 + Webhook 回调 + 验签
 
-### 客户确认
-
-- 客户可对指定版本点击“确认定稿”。
-- 确认动作需要记录客户信息、确认时间、确认版本和访问来源。
-- 已确认版本作为后续争议处理和生产依据。
-
-### 确认记录
-
-- 保存确认日志和关键审稿行为。
-- 确认记录默认不可随意删除。
-- 后续可扩展为确认单、PDF 导出或电子签名。
-
-### 门店与员工管理
-
-- 支持门店、员工、角色和权限管理。
-- MVP 阶段优先保证门店内部协作闭环。
-- 后续可扩展套餐、用量、账单和多租户能力。
-
-## 默认技术栈
+## 🏗️ 技术栈
 
 | 层级 | 技术 |
-| --- | --- |
-| 后端 | JDK 17、Spring Boot 3.5.x |
-| 后端分层 | Controller、Service、DAO、Domain/DTO |
-| 数据访问 | MyBatis-Plus，复杂查询可补充 MyBatis XML |
-| 前端 | Vue 3、Vite、TypeScript |
-| 前端组件库 | Element Plus、@element-plus/icons-vue |
+|------|------|
+| 后端 | JDK 17 · Spring Boot 3.5 · MyBatis-Plus 3.5 |
+| 前端 | Vue 3.5 · Vite 6 · TypeScript · Element Plus 2.13 |
 | 数据库 | MySQL 8.0 |
-| 缓存 | Redis 7.4.8（Docker 镜像建议 `redis:7.4.8-alpine`） |
-| 对象存储 | MinIO `RELEASE.2024-07-16T23-46-41Z`（Docker 镜像建议 `minio/minio:RELEASE.2024-07-16T23-46-41Z`） |
-| 部署 | Docker、Docker Compose |
-| API 风格 | REST JSON |
+| 缓存 | Redis 7.4 |
+| 对象存储 | MinIO |
+| 认证 | JWT（jjwt 0.13） + RSA 加密传输 |
+| 部署 | Docker Compose · 多阶段构建 |
 
-## 架构与配置建议
-
-### 版本选择
-
-- JDK 固定使用 17。它是 Spring Boot 3.x 的稳定基线，也满足后续接入 LangChain4j 等 AI 能力的运行要求。
-- Spring Boot 使用 3.5.x 最新补丁版本。该版本线兼顾长期维护、生态兼容和 AI 组件接入，不建议 MVP 阶段直接使用 Spring Boot 4.x。
-- MySQL 固定使用 8.0。开发、测试和部署环境尽量保持同一主版本，避免 SQL、排序规则和时间字段行为不一致。
-- Redis 固定使用 7.4.8。MVP 阶段只使用缓存、会话、短链状态、限流和轻量任务状态，Redis 7.4.x 功能足够且版本线成熟；Docker Compose 建议固定 `redis:7.4.8-alpine`，不要使用浮动的 `latest`。
-- MinIO 固定使用 2024 年旧版 `RELEASE.2024-07-16T23-46-41Z`。MVP 阶段优先选择较成熟的固定镜像，避免使用过新的 MinIO 版本或浮动的 `latest`；生产环境部署前仍需要复核镜像可用性、安全补丁和许可证策略。
-- 后续如接入 LangChain4j、Spring AI 或其他大模型问答能力，优先以独立业务模块接入，不影响审稿主流程。
-
-### 后端分层
-
-后端默认采用 Spring Boot 分层架构：
-
-```text
-Controller
-→ Service
-→ DAO
-→ MySQL
-```
-
-- Controller 只处理 HTTP 入参、权限边界和响应。
-- Service 承载业务流程、事务和跨资源编排。
-- DAO 负责数据库访问，默认基于 MyBatis-Plus Mapper 实现。
-- 复杂统计、列表筛选、关联查询可使用 MyBatis XML 补充。
-- DTO/VO 与数据库实体分离，避免直接暴露表结构。
-
-### 推荐后端依赖
-
-初始化 Spring Boot 工程时，建议优先加入以下依赖：
-
-```text
-spring-boot-starter-web
-spring-boot-starter-validation
-spring-boot-starter-security
-mybatis-plus-spring-boot3-starter
-mysql-connector-j
-spring-boot-starter-data-redis
-minio
-langchain4j-spring-boot-starter（后续 AI 功能需要时再引入）
-springdoc-openapi-starter-webmvc-ui
-lombok
-mapstruct
-spring-boot-starter-test
-```
-
-MVP 阶段可以先弱化 `spring-boot-starter-security` 的复杂权限模型。`langchain4j-spring-boot-starter` 不在首版强制引入，等 AI 问答、智能审稿建议、知识库检索等功能进入开发时再加入。
-
-### 环境配置
-
-配置文件建议按环境拆分：
-
-```text
-application.yml
-application-dev.yml
-application-test.yml
-application-prod.yml
-```
-
-- `application.yml` 放通用配置和默认值。
-- `application-dev.yml` 面向本地 Docker Compose 依赖。
-- `application-test.yml` 面向自动化测试。
-- `application-prod.yml` 面向真实门店或平台部署。
-- 数据库、Redis、MinIO、JWT、文件访问域名等敏感配置必须支持环境变量覆盖。
-
-示例：
-
-```yaml
-spring:
-  datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/proofly}
-    username: ${DB_USERNAME:proofly}
-    password: ${DB_PASSWORD:proofly123}
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-
-minio:
-  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
-  access-key: ${MINIO_ACCESS_KEY:minioadmin}
-  secret-key: ${MINIO_SECRET_KEY:minioadmin}
-  bucket: ${MINIO_BUCKET:proofly}
-
-proofly:
-  auth:
-    jwt-secret: ${PROOFLY_AUTH_JWT_SECRET:proofly-local-dev-jwt-secret-must-be-at-least-32-bytes}
-    access-token-ttl-minutes: ${PROOFLY_AUTH_ACCESS_TOKEN_TTL_MINUTES:120}
-    refresh-token-ttl-days: ${PROOFLY_AUTH_REFRESH_TOKEN_TTL_DAYS:7}
-    redis-prefix: ${PROOFLY_AUTH_REDIS_PREFIX:proofly}
-
-### 原生 SaaS 多租户支持
-
-从第一版数据模型开始，核心业务表严格包含 `store_id`，以支持原生 SaaS 架构：
-
-- `user`
-- `project`
-- `project_version`
-- `annotation`
-- `confirmation_record`
-- `file_object`
-
-所有业务逻辑均基于 `store_id` 进行数据隔离，确保平台租户安全。
-
-
-## 推荐目录结构
-
-```text
-Proofly/
-├── backend/        # Spring Boot 后端工程
-├── frontend/       # Vue 3 前端工程
-├── docs/           # 产品、接口、数据库和部署文档
-├── docker/         # Docker Compose、镜像和环境配置
-├── scripts/        # 本地开发、构建、部署辅助脚本
-├── AGENT.md        # Codex 开发协作规范
-└── README.md       # 项目说明文档
-```
-
-
-## 本地开发
-
-当前仓库处于项目启动阶段，前后端工程尚未初始化。初始化后建议补充以下命令：
+## 🚀 快速启动
 
 ```bash
-# 启动基础依赖
-docker compose -f docker/docker-compose.dev.yml up -d
+git clone https://github.com/liyu-1028/Proofly.git
+cd Proofly
 
-# 启动后端
+# 1. 准备环境变量（必做！）
+cp .env.example .env
+
+# 2. 生成 RSA 密钥对并填入 .env（必做！否则后端启动失败）
+mkdir -p backend/keys
+openssl genpkey -algorithm RSA -out backend/keys/private.pem -pkeyopt rsa_keygen_bits:2048
+openssl rsa -in backend/keys/private.pem -pubout -out backend/keys/public.pem
+# 把 public.pem / private.pem 内容（去掉头尾标记、拼成单行）分别填入 .env 中的
+# PROOFLY_AUTH_RSA_PUBLIC_KEY 和 PROOFLY_AUTH_RSA_PRIVATE_KEY
+
+# 3. 启动基础设施
+docker compose up -d mysql redis minio minio-init
+
+# 4. 等待 MySQL 健康检查通过，然后初始化数据库
+until docker compose exec -T mysql mysqladmin ping -h localhost -uroot -pproofly_dev --silent; do sleep 2; done
+docker compose exec -T mysql mysql -uroot -pproofly_dev < docs/mysql-schema.sql
+docker compose exec -T mysql mysql -uroot -pproofly_dev < docs/seed-dev.sql   # 可选：仅本地开发
+
+# 5. 启动后端（⚠️ Spring 不会自动读取仓库根 .env，需要先把变量导入 shell）
 cd backend
-./mvnw spring-boot:run
+set -a && source ../.env && set +a && mvn spring-boot:run
 
-# 启动前端
-cd frontend
-npm install
-npm run dev
+# 6. 新终端启动前端
+cd frontend && npm install && npm run dev
 ```
 
-## 部署方向
+打开 <http://localhost:5173>：
+- 用 `admin` / `admin123` 登录（仅种子账号，开发环境）
+- 或在 `/register` 自助注册新门店
 
-MVP 阶段优先使用 Docker Compose 管理运行环境：
+> 💡 IDE 用户：在 Run/Debug Configurations 的 Environment variables 中粘贴 `.env` 内容即可。
 
-- `backend`：Spring Boot API 服务。
-- `frontend`：Vue 3 构建后的静态资源，可由 Nginx 托管。
-- `mysql`：业务数据持久化。
-- `redis`：缓存、会话、短链状态和轻量任务状态，镜像建议 `redis:7.4.8-alpine`。
-- `minio`：设计稿文件、预览文件和导出文件存储，镜像建议 `minio/minio:RELEASE.2024-07-16T23-46-41Z`。
+详细文档：[docs/quickstart.md](docs/quickstart.md)
 
-MinIO 对象路径建议从一开始带门店、项目和版本维度：
+## 📐 架构
 
-```text
-stores/{storeId}/projects/{projectId}/versions/{versionId}/{fileId}-{filename}
+```
+┌──────────────────────────────────────────────────────────┐
+│                      前端 (Vue 3)                        │
+│  门店后台 SPA ──┬── 客户公开审稿页 (免登录 Token)         │
+└────────┬────────┴───────────────────────┬───────────────┘
+         │ /api/admin/** (JWT)            │ /api/public/** (Token)
+┌────────▼────────────────────────────────▼───────────────┐
+│                  后端 (Spring Boot 3)                    │
+│  Controller → Service → DAO → MyBatis-Plus → MySQL       │
+│              ↓                                           │
+│  ├─ 鉴权 (JWT + Redis 黑名单 + RSA)                      │
+│  ├─ 存储 (MinIO 预签名 URL)                              │
+│  ├─ 缓存 (Redis Token)                                   │
+│  └─ 定时任务 (套餐到期扫描)                              │
+└────────┬────────────────────────────────┬───────────────┘
+         │                                │
+    ┌────▼─────┐    ┌──────┐    ┌─────────▼────────┐
+    │  MySQL   │    │ Redis │    │      MinIO       │
+    └──────────┘    └──────┘    └──────────────────┘
 ```
 
-## 开发原则
+更多架构说明：[docs/system-module-list.md](docs/system-module-list.md)
 
-- 先完成“上传设计稿 → 客户标注 → 上传新版 → 客户确认 → 留痕”的闭环。
-- 设计稿版本不可覆盖，确认记录不可随意删除。
-- 每次新增、修改或删除接口时，同步更新对应模块接口文档。接口文档文件名使用 `docs/api-mXX-module-name.md` 格式，每完成一个新模块功能时创建或更新该模块的独立接口文档。
-- 业务流程优先清晰可靠，复杂协作、计费、电子签名等能力后续迭代。
-- 默认按多门店、多角色、多版本的方向设计，但 MVP 实现保持轻量。
-- 配置从开发阶段就支持环境变量覆盖，避免为不同门店部署时修改代码。
+## 📦 模块清单
 
-## 当前状态
+| 模块 | 状态 | 说明 |
+|------|------|------|
+| M01 账号、门店与权限 | ✅ | RBAC + JWT |
+| M02 审稿项目 | ✅ | 项目生命周期 |
+| M03 设计稿版本 | ✅ | 自动递增 |
+| M04 文件上传与 MinIO | ✅ | 预签名预览 |
+| M05 客户审稿链接 | ✅ | 哈希 Token |
+| M06 在线标注评论 | ✅ | 含语音 |
+| M07 客户确认定稿 | ✅ | 幂等 |
+| M08 审稿行为与确认记录 | ✅ | 审计日志 |
+| M09 后台工作台 | ✅ | 状态看板 |
+| M10 通知与提醒 | ✅ | 站内通知 |
+| M11 系统配置 | ✅ | 品牌定制 |
+| M12 部署运维 | 🔄 | 云原生方案设计中 |
+| M13 套餐、用量与账单 | ✅ | 模拟 XPay + Webhook |
+| M14 AI 辅助能力 | ⏸️ | 待规划 |
 
-- [x] 创建项目基础目录。
-- [x] 生成 README 和 AGENT 开发规范。
-- [x] 初始化 Spring Boot 后端工程。
-- [x] 初始化 Vue 3 前端工程。
-- [x] 完成账号模块前端登录、会话和后台路由守卫。
-- [ ] 编写 Docker Compose 本地依赖配置。
-- [ ] 设计核心数据模型和接口。
+详细完成情况：[docs/module-completion.md](docs/module-completion.md)
+
+## 🗂️ 目录结构
+
+```
+Proofly/
+├── backend/                # Spring Boot 后端
+│   ├── src/main/java/      # 业务代码
+│   ├── src/main/resources/ # 配置 + Mapper
+│   ├── Dockerfile
+│   └── pom.xml
+├── frontend/               # Vue 3 前端
+│   ├── src/views/          # 页面（admin / auth / public）
+│   ├── src/api/            # API 封装
+│   ├── src/stores/         # Pinia 状态
+│   ├── src/router/
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── package.json
+├── docs/                   # 项目文档
+│   ├── quickstart.md
+│   ├── system-module-list.md
+│   ├── module-completion.md
+│   ├── database.md
+│   ├── mysql-schema.sql    # 表结构 DDL
+│   ├── seed-dev.sql        # 开发种子数据
+│   └── ...
+├── docker-compose.yml      # 一键启动依赖
+├── .env.example            # 环境变量模板
+├── LICENSE                 # GPL-3.0
+└── README.md
+```
+
+## 🖼️ 截图
+
+> 截图将在正式发布前补充。
+>
+> 占位计划：
+> - 登录与注册
+> - 工作台看板
+> - 项目详情 + 标注
+> - 客户审稿页
+> - 套餐选择 + 模拟收银台
+
+## 🤝 贡献
+
+欢迎贡献！请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 了解开发流程与代码规范。
+
+提交 Issue：[GitHub Issues](https://github.com/liyu-1028/Proofly/issues)
+
+## 📜 安全
+
+发现安全漏洞？请阅读 [SECURITY.md](SECURITY.md) 反馈，**不要**在公开 Issue 中披露。
+
+## ⚖️ 许可证
+
+本项目采用 **GNU General Public License v3.0** — 详见 [LICENSE](LICENSE)。
+
+> GPL-3.0 意味着你可以自由使用、修改、分发，但任何衍生作品也必须以 GPL-3.0 开源。
+
+## 🙏 致谢
+
+- [Element Plus](https://element-plus.org/) — Vue 3 组件库
+- [Spring Boot](https://spring.io/projects/spring-boot) — 后端框架
+- [MyBatis-Plus](https://baomidou.com/) — 持久层增强
+- [MinIO](https://min.io/) — 对象存储
+- [Redis](https://redis.io/) — 缓存
+- 所有贡献者
+
+## 📮 联系方式
+
+- GitHub Issues：功能建议与 Bug 反馈
+- 安全漏洞：见 [SECURITY.md](SECURITY.md)
+
+---
+
+Made with ❤️ by Proofly Contributors

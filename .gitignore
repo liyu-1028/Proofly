@@ -1,18 +1,53 @@
-.idea
+# ===== IDE =====
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.DS_Store
 
-.env
-
-.antigravitycli
-
-.log
-
+# ===== 构建产物 =====
 target/
+backend/target/
+frontend/dist/
+*.class
+*.jar
+*.war
 
-.mcp.json
+# ===== 依赖 =====
+node_modules/
+frontend/node_modules/
+# 当前未启用 Maven Wrapper；如未来生成 mvnw，需移除此注释并验证不被忽略
+.mvn/wrapper/maven-wrapper.jar.bak
 
+# ===== 日志与运行时数据 =====
+*.log
+backend/logs/
+backend/tmp/
+logs/
 
-
+# ===== 环境变量与本地配置 =====
+.env
+.env.*
+!.env.example
 *.local
 
-frontend/dist
-frontend/node_modules
+# ===== 个人工具与 AI 助手配置 =====
+.claude/
+.antigravitycli/
+.mcp.json
+.aider*
+.continue/
+
+# ===== 临时文件 =====
+*.tmp
+*.swp
+*.bak
+*.orig
+
+# ===== 测试与覆盖率 =====
+coverage/
+.nyc_output/
+*.lcov
+htmlcov/
+.pytest_cache/
