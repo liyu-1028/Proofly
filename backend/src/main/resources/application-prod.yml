@@ -15,8 +15,6 @@ minio:
   secret-key: ${MINIO_SECRET_KEY}
   bucket: ${MINIO_BUCKET:proofly}
 proofly:
-  auth:
-
   default-store-id: ${PROOFLY_DEFAULT_STORE_ID:}
   auth:
     jwt-secret: ${PROOFLY_AUTH_JWT_SECRET}
