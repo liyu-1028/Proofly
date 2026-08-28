@@ -53,3 +53,7 @@ htmlcov/
 .pytest_cache/
 # ===== 内部商业策略文档（仅本地保留，不开源） =====
 docs/saas-commercialization-plan.md
+
+# ===== 本地 RSA 密钥（严禁提交） =====
+backend/keys/
+*.pem
