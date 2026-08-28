@@ -80,7 +80,7 @@ INSERT INTO `user` (
   '系统管理员',
   '00000000000',
   'admin@proofly.local',
-  '$2y$10$7BwVGcyIudUBpNDL/k.wkO8n5OFl0F/X1/JxNQyXnY8.uSvpw0PaW',
+  '$2a$10$w0krIEufDvyKqB5MJinm4.enMJUpTdiP/jfXOKTRTXto0LwZvagJW',
   'active',
   CURRENT_TIMESTAMP(3),
   CURRENT_TIMESTAMP(3),
