@@ -15,7 +15,7 @@
 
 请通过以下方式私下报告：
 
-- 📧 邮件：security@proofly.local（占位，正式发布时替换）
+- 📧 邮件：[liyanlong8468@gmail.com](mailto:liyanlong8468@gmail.com)
 - 🔐 GitHub Private Vulnerability Reporting：仓库 → Security → Advisories → New draft security advisory
 
 ## 报告内容建议
