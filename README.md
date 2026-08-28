@@ -55,27 +55,27 @@
 
 **门店后台登录**
 
-![门店后台登录](assets/images/login.png)
+![门店后台登录](docs/screenshots/01-login.png)
 
 **工作台**
 
-![工作台](assets/images/img.png)
+![工作台](docs/screenshots/03-dashboard.png)
 
 **审稿项目管理**
 
-![审稿项目管理](assets/images/img_1.png)
+![审稿项目管理](docs/screenshots/04-project-list.png)
 
 **项目详情与版本管理**
 
-![项目详情与版本管理](assets/images/img_5.png)
+![项目详情与版本管理](docs/screenshots/05-project-detail.png)
 
 **客户在线标注与确认定稿（免登录公开链接）**
 
-![客户在线标注与确认定稿](assets/images/img_7.png)
+![客户在线标注与确认定稿](docs/screenshots/06-public-review.png)
 
 **修改意见处理**
 
-![修改意见处理](assets/images/img_9.png)
+![修改意见处理](docs/screenshots/07-annotation.png)
 
 ## 🚀 安装和使用
 

@@ -6,20 +6,20 @@
 
 发布 v0.1.0 前请补充以下截图：
 
-| 文件名 | 内容 | 优先级 |
-|--------|------|--------|
-| `01-login.png` | 登录页 | P1 |
-| `02-register.png` | 自助注册页 | P1 |
-| `03-dashboard.png` | 工作台看板 | P0 |
-| `04-project-list.png` | 项目列表 | P1 |
-| `05-project-detail.png` | 项目详情（含版本管理、标注） | P0 |
-| `06-public-review.png` | 客户公开审稿页 | P0 |
-| `07-annotation.png` | 点图标注交互 | P0 |
-| `08-staff.png` | 员工管理 | P2 |
-| `09-settings.png` | 门店设置 | P2 |
-| `10-billing-plans.png` | 套餐选择 | P1 |
-| `11-mock-checkout.png` | 模拟收银台 | P1 |
-| `12-notification.png` | 通知中心 | P2 |
+| 文件名 | 内容 | 状态 |
+|--------|------|------|
+| `01-login.png` | 登录页 | ✅ 已补充 |
+| `02-register.png` | 自助注册页 | 待补充 |
+| `03-dashboard.png` | 工作台看板 | ✅ 已补充 |
+| `04-project-list.png` | 项目列表 | ✅ 已补充 |
+| `05-project-detail.png` | 项目详情（含版本管理、标注） | ✅ 已补充 |
+| `06-public-review.png` | 客户公开审稿页 | ✅ 已补充 |
+| `07-annotation.png` | 点图标注交互 | ✅ 已补充 |
+| `08-staff.png` | 员工管理 | 待补充 |
+| `09-settings.png` | 门店设置 | 待补充 |
+| `10-billing-plans.png` | 套餐选择 | 待补充 |
+| `11-mock-checkout.png` | 模拟收银台 | 待补充 |
+| `12-notification.png` | 通知中心 | 待补充 |
 
 ## 截图规范
 
