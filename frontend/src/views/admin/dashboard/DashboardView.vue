@@ -247,9 +247,19 @@ onMounted(() => {
             </span>
           </RouterLink>
         </div>
-        <div v-else class="empty-card">
-          <el-icon><Finished /></el-icon>
-          <span>目前没有需要优先处理的项目</span>
+        <div v-else class="empty-state">
+          <span class="empty-icon"><el-icon><Finished /></el-icon></span>
+          <strong>暂无需要优先处理的项目</strong>
+          <p>当客户提交修改意见或等待你确认定稿时，相关项目会自动置顶显示在这里。</p>
+          <RouterLink to="/admin/projects" class="empty-cta">
+            <el-icon><FolderOpened /></el-icon>
+            创建新的审稿项目
+          </RouterLink>
+          <ul class="empty-hints">
+            <li><span class="project-dot status-change_requested"></span>客户提交修改意见</li>
+            <li><span class="project-dot status-waiting_confirm"></span>等待确认定稿</li>
+            <li><span class="project-dot status-waiting_feedback"></span>客户正在审稿中</li>
+          </ul>
         </div>
       </section>
 
@@ -521,7 +531,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .lower-grid {
@@ -531,6 +541,87 @@ onMounted(() => {
 .panel {
   min-width: 0;
   padding: 20px;
+}
+
+.priority-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 128px;
+  padding: 32px 24px;
+  border: 1px dashed #d9e4ee;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fbfcfd 0%, #f3f8f7 100%);
+  text-align: center;
+}
+
+.empty-icon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  margin-bottom: 10px;
+  border-radius: 50%;
+  background: #e8f6f3;
+  color: #14796d;
+  font-size: 30px;
+}
+
+.empty-state strong {
+  color: #182026;
+  font-size: 16px;
+}
+
+.empty-state p {
+  max-width: 340px;
+  margin: 0;
+  color: #64727f;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.empty-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  border-radius: 8px;
+  padding: 9px 18px;
+  background: #14796d;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background 0.2s;
+}
+
+.empty-cta:hover {
+  background: #0f5c52;
+}
+
+.empty-hints {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  color: #64727f;
+  font-size: 12px;
+}
+
+.empty-hints li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .section-header {
