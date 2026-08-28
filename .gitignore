@@ -51,3 +51,5 @@ coverage/
 *.lcov
 htmlcov/
 .pytest_cache/
+# ===== 内部商业策略文档（仅本地保留，不开源） =====
+docs/saas-commercialization-plan.md
