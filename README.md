@@ -230,6 +230,7 @@ Test Account: `admin` / `admin123`（种子数据，仅限本地开发）
 
 ## 🙏 致谢
 
+- 受一位实习同事 [Jmiao11](https://github.com/Jmiao11) 的推动，把这个沉积在我目录中多个月的项目整理开源出来了，希望能帮到有需要的小伙伴
 - [Vue Vben Admin](https://github.com/vbenjs/vue-vben-admin) — README 模板参考
 - [Element Plus](https://element-plus.org/) — Vue 3 组件库
 - [Spring Boot](https://spring.io/projects/spring-boot) — 后端框架
