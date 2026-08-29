@@ -62,7 +62,7 @@
 
 ### 📝 文档
 - README.md 重写（特性、架构、快速启动、模块清单）
-- LICENSE (GPL-3.0)
+- LICENSE (MIT，由 GPL-3.0 变更)
 - CONTRIBUTING.md
 - SECURITY.md
 - CODE_OF_CONDUCT.md

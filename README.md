@@ -4,7 +4,7 @@
 
 一套面向**广告制作店 / 图文打印店 / 快印店 / 包装印刷店 / 设计工作室**的在线审稿确认系统。
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/liyu-1028/Proofly)](https://github.com/liyu-1028/Proofly/releases)
 ![Status: MVP](https://img.shields.io/badge/Status-MVP-green)
 ![Backend: Spring Boot 3](https://img.shields.io/badge/Backend-Spring%20Boot%203.5-brightgreen)
@@ -226,7 +226,7 @@ Test Account: `admin` / `admin123`（种子数据，仅限本地开发）
 
 ## ⚖️ 许可证
 
-本项目基于 [GPL-3.0](LICENSE) 许可证开源 — 你可以自由使用、修改、分发，但任何衍生作品也必须以 GPL-3.0 开源。
+本项目基于 [MIT](LICENSE) 许可证开源 — 你可以自由使用、修改、分发本项目代码，只需保留原版权声明即可。
 
 ## 🙏 致谢
 
