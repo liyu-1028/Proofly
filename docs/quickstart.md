@@ -84,11 +84,11 @@ until docker compose exec -T mysql mysqladmin ping -h localhost -uroot -pproofly
   sleep 2
 done
 
-# 1) 执行 DDL 建表
-docker compose exec -T mysql mysql -uroot -pproofly_dev < docs/mysql-schema.sql
+# 1) 执行 DDL 建表（必须指定 utf8mb4，否则容器内 mysql 客户端默认 latin1，中文会乱码）
+docker compose exec -T mysql mysql -uroot -pproofly_dev --default-character-set=utf8mb4 < docs/mysql-schema.sql
 
 # 2) （可选）执行开发种子数据：默认门店 + admin 账号
-docker compose exec -T mysql mysql -uroot -pproofly_dev < docs/seed-dev.sql
+docker compose exec -T mysql mysql -uroot -pproofly_dev --default-character-set=utf8mb4 proofly < docs/seed-dev.sql
 ```
 
 > 种子数据插入后会创建：
