@@ -60,3 +60,7 @@ backend/keys/
 
 # ===== 本地运行时产物（启停脚本日志/PID） =====
 .run/
+
+# ===== 本地启停脚本（含本机 JDK/Maven/nvm 路径，不入库） =====
+script/start.sh
+script/stop.sh
